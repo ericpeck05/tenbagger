@@ -14,6 +14,7 @@ joins the cold tier (a company already warm stays warm).
 import argparse
 import json
 import logging
+import re
 import sys
 import time
 import zipfile
@@ -89,7 +90,12 @@ _ABBREVIATIONS = {
 
 
 def tidy_name(name: str) -> str:
-    """ "ACME UNITED CORP" -> "Acme United Corp". Mixed-case names are left alone."""
+    """Tidy an EDGAR name: "ACME UNITED CORP /DE/" -> "Acme United Corp".
+
+    EDGAR appends the state of incorporation to some names ("/DE/", "/ok/"); it is dropped.
+    Mixed-case names keep their case.
+    """
+    name = re.sub(r"\s*/[A-Za-z]{2,4}/?\s*$", "", name).strip()
     if not name.isupper():
         return name
     words = []
