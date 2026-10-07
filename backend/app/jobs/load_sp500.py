@@ -52,7 +52,11 @@ def read_predecessors() -> dict[int, int]:
 
 
 def _clean_name(name: str) -> str:
-    return name.split(" (Class")[0].strip()
+    """ "Alphabet Inc. (Class A)" -> "Alphabet Inc.", "Coca-Cola Company (The)" -> "The ..."."""
+    name = name.split(" (Class")[0].strip()
+    if name.endswith(" (The)"):
+        name = "The " + name.removesuffix(" (The)")
+    return name
 
 
 def _cache_path(kind: str, cik: int) -> Path:
