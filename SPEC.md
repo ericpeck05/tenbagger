@@ -25,8 +25,8 @@ Three free providers cover everything, and each does one job. Every provider sit
 | Job | Provider | What it gives | Limit | Key needed |
 | --- | --- | --- | --- | --- |
 | Fundamentals and filings | [SEC EDGAR APIs](https://www.sec.gov/search-filings/edgar-application-programming-interfaces) | Every reported XBRL fact per company, filing history, ticker to CIK map | [10 requests per second](https://www.sec.gov/about/webmaster-frequently-asked-questions) | No, but a User-Agent with a contact email is required |
-| Daily price history | [Alpaca Basic plan](https://docs.alpaca.markets/docs/about-market-data-api) | Daily bars since 2016, IEX feed | 200 calls per minute, cannot query the latest 15 minutes | Yes, free account |
-| Current quote | [Finnhub free tier](https://finnhub.io/docs/api) | Latest price and day change for US stocks | Reported as 60 calls per minute, unconfirmed | Yes, free account |
+| Daily price history | [Alpaca Basic plan](https://docs.alpaca.markets/docs/about-market-data-api) | Daily bars since January 2016, consolidated SIP feed | 200 calls per minute (confirmed), SIP requests must end at least 15 minutes ago | Yes, free account |
+| Current quote | [Finnhub free tier](https://finnhub.io/docs/api) | Latest price and day change for US stocks | 60 calls per minute (confirmed 2026-10-07) | Yes, free account |
 
 Notes that shape the build:
 
@@ -35,8 +35,8 @@ Notes that shape the build:
 - **EDGAR bulk file.** `https://www.sec.gov/Archives/edgar/daily-index/xbrl/companyfacts.zip` holds the same data as the per-company API for every filer and is rebuilt nightly at about 3:00 a.m. ET. `https://www.sec.gov/Archives/edgar/daily-index/bulkdata/submissions.zip` does the same for filing history. The whole-market load uses these instead of thousands of single calls.
 - **EDGAR freshness.** The XBRL APIs update within about a minute of a filing being published, so new quarters arrive when the 10-Q or 10-K posts, not when earnings are announced.
 - **EDGAR and the browser.** `data.sec.gov` does not support CORS. A web page cannot call it directly, which is why this app needs a backend.
-- **Alpaca.** Base URL `https://data.alpaca.markets`, headers `APCA-API-KEY-ID` and `APCA-API-SECRET-KEY`. IEX is a single exchange, so volume is partial. Closing prices are fine for charts and ratios. Do not show volume as if it were market-wide. Request split-adjusted bars.
-- **Finnhub.** The 60 per minute figure could not be confirmed from Finnhub's own page. Build the rate limiter with the number in config, and confirm it with the first key. Do not rely on Finnhub for price history. Free keys have been reported as denied on the candles endpoint.
+- **Alpaca.** Base URL `https://data.alpaca.markets`, headers `APCA-API-KEY-ID` and `APCA-API-SECRET-KEY`. Request split-adjusted bars from the `sip` feed with an end time at least 15 minutes ago: on the free plan that returns market-wide bars back to January 2016. (Tested 2026-10-07. The `iex` feed, which the spec first named, only goes back to July 2020 and covers one exchange.) Bars are fetched through the latest finished session only, so a partial day is never stored as a close; today's candle comes from the live quote. Volume is still not shown.
+- **Finnhub.** The free key's limit is 60 calls per minute, confirmed from the `x-ratelimit-limit` header on the first call. The config runs at 50. The limiter is a token bucket that holds 5 calls; the background quote loop always leaves 3 of them free, so a stock opened by hand never queues behind the loop. Do not rely on Finnhub for price history. Free keys have been reported as denied on the candles endpoint.
 - **Reuse.** SEC states that EDGAR filing content is free to access and reuse. Finnhub and Alpaca free plans are for personal use, so their data stays on the owner's machine and never goes into the repo.
 
 ## Architecture
@@ -109,7 +109,8 @@ One SQLite file, `data/tenbagger.db`. Ratios are stored, not computed per reques
 | `ratio_history` | Company, fiscal year | `cik`, `fiscal_year`, the same ratio columns, used for the 5-year range bars |
 | `sector_medians` | Sector | `sector`, `as_of`, median of each ratio |
 | `prices_daily` | Ticker, day | `ticker`, `date`, `open`, `high`, `low`, `close` |
-| `quotes` | Ticker | `ticker`, `price`, `change`, `change_pct`, `prev_close`, `fetched_at` |
+| `quotes` | Ticker | `ticker`, `price`, `change`, `change_pct`, `prev_close`, `open`, `high`, `low`, `quote_time`, `fetched_at` |
+| `price_fetches` | Ticker | `ticker`, `fetched_at`, `first_date`, `last_date`: when bars were last topped up, so a cold stock is not re-requested on every open |
 | `filings` | Company, filing | `cik`, `accession`, `form`, `period`, `filed_at`, `title`, `url`. Keyed by both: one filing can be listed under several companies |
 | `watchlist` | Ticker | `ticker`, `added_at`, `position` |
 | `insider_trades` | Form 4 transaction | `cik`, `filed_at`, `person`, `role`, `code`, `shares`, `price` |
@@ -150,7 +151,7 @@ The S&P 500 list is used instead of the Fortune 500, because Fortune ranks by re
 3. The page renders fundamentals first, then fills in the price and chart when they arrive. Price-based ratios such as P/E are recomputed with the fresh price.
 4. Everything fetched is stored, so the next open is instant.
 
-A quote older than 15 minutes during market hours is shown with its age and refreshed in the background.
+A quote older than 15 minutes during market hours, or from before the latest close when the market is shut, is shown with its age and refreshed in the background. A missing quote is handled the same way: the page never waits on Finnhub. It renders with what is stored and polls every 1.5 seconds until the fresh quote lands.
 
 ## Fundamentals pipeline
 
@@ -327,7 +328,7 @@ The look takes cues from professional trading terminals without copying one: tru
 1. **Header.** Ticker, name, exchange, sector, Lynch category, price, day change, and a strip with market cap, P/E, PEG, Lynch score, and the 52-week range.
 2. **Price chart.** Full width and the tallest element on the page, about 500 px. Candlesticks by default with a switch to a line, and range buttons for 1M, 6M, YTD, 1Y, 5Y, and Max. Daily candles up to 6M, weekly beyond. An open, high, low, close readout above the chart and a marker for the last price on the axis. No volume, since the free feed covers one exchange. The chart is the owner's favorite part of the page, so give it the most care.
 3. **Lynch check.** Full width under the chart. Score and category chips on the left, the nine tests in two columns on the right at a larger type size, each with its value and a Pass or Watch pill.
-4. **Four ratio cards.** Valuation, Growth, Quality, Balance sheet. Each row shows the value now, a bar placing it inside the stock's own 5-year range, and the sector median. Growth shows 1, 3, and 5 year rates instead of a range bar.
+4. **Four ratio cards.** Valuation, Growth, Quality, Balance sheet. Each row shows the value now, a bar placing it inside the stock's own 5-year range, and the sector median. Growth shows 1, 3, and 5 year rates instead of a range bar. Growth rates are gains and losses, so they carry a sign and a color.
 5. **10-year trend.** Bars for fiscal-year revenue and EPS.
 6. **Recent filings.** The latest 10-K, 10-Q, 8-K, and Form 4 entries, each linking to the filing on sec.gov.
 7. **Source line.** Where each number came from and how old it is.
@@ -336,7 +337,7 @@ The watchlist sits in a left column on the stock page, with warm names and their
 
 **Search**
 
-- Opens with the `/` key from anywhere. Up and Down move, Enter opens, Esc closes, `W` adds to the watchlist.
+- Opens with the `/` key from anywhere. Up and Down move, Enter opens, Esc closes, Tab adds to the watchlist. (`W` cannot do this inside the search box, since it is also a letter people type: WMT, WFC. On the stock page `W` toggles the watchlist.)
 - Matches ticker prefix first, then company name. Runs against the local `companies` table, so results appear as the user types.
 - Results are grouped: warm names with their price, then everything else with a note on whether it is cached.
 
@@ -403,7 +404,7 @@ r_t = (V_t - F_t) / V_(t-1) - 1
 
 - **Dividends.** The free price feeds do not include them, so returns are price-only unless a dividend is logged as a transaction.
 - **Index funds and ETFs.** Price, value, and gains work. EDGAR has no company fundamentals for them, so the Lynch columns show a dash and they are left out of look-through.
-- **History.** Alpaca's free bars start in 2016, so the performance chart cannot go back further.
+- **History.** Alpaca's free bars start in January 2016, so the performance chart cannot go back further.
 
 Trades live only in the local database, which is gitignored. Demo mode ships with made-up holdings so the page works on a fresh clone.
 
@@ -457,6 +458,6 @@ Until phase 5 lands, the stock page shows the Lynch panel, range bars, and secto
 
 **Open**
 
-- [ ] Confirm Finnhub's free rate limit with a real key, and set the quote loop to match.
+- [x] Confirm Finnhub's free rate limit with a real key, and set the quote loop to match. (60 per minute; the loop uses 45 of the configured 50.)
 - [ ] Decide the final name. "Tenbagger" is a placeholder.
 - [ ] Decide whether the portfolio should also hold crypto, and whether to add CSV import from a brokerage export.
