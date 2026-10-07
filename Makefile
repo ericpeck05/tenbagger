@@ -41,7 +41,7 @@ format: setup
 load: setup
 	cd backend && .venv/bin/python -m app.jobs.load_sp500
 
-# Load every listed US company from EDGAR's nightly bulk files (3 GB download, about 15 minutes).
+# Load every listed US company from EDGAR's nightly bulk files (3 GB download, under 10 minutes).
 bulk: setup
 	cd backend && .venv/bin/python -m app.jobs.bulk_load
 
