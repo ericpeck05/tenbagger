@@ -1,4 +1,4 @@
-.PHONY: setup dev backend frontend test lint format demo
+.PHONY: setup dev test lint format load coverage demo
 
 PY := backend/.venv/bin/python
 URL := http://localhost:5173
@@ -36,6 +36,13 @@ lint: setup
 
 format: setup
 	cd backend && .venv/bin/ruff check --fix . && .venv/bin/ruff format .
+
+# Load S&P 500 fundamentals from EDGAR (about two minutes), then report tag coverage.
+load: setup
+	cd backend && .venv/bin/python -m app.jobs.load_sp500
+
+coverage: setup
+	cd backend && .venv/bin/python -m app.jobs.coverage
 
 demo:
 	@echo "Demo mode arrives in phase 7."
