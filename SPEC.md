@@ -102,14 +102,15 @@ One SQLite file, `data/tenbagger.db`. Ratios are stored, not computed per reques
 
 | Table | One row per | Key columns |
 | --- | --- | --- |
-| `companies` | Company | `cik`, `ticker`, `name`, `exchange`, `sic_code`, `sector`, `tier`, `view_count`, `last_viewed_at` |
-| `facts` | Company, metric, period | `cik`, `metric`, `period_end`, `fiscal_period` (FY, Q1 to Q4), `value`, `form`, `filed_at`, `source_tag` |
-| `ratios` | Company | `cik`, `as_of`, one column per ratio on the stock page, `lynch_category`, `lynch_score` |
+| `companies` | Company | `cik`, `ticker` (primary), `name`, `exchange`, `sic_code`, `sector`, `fiscal_year_end`, `tier`, `in_sp500`, `supported`, `view_count`, `last_viewed_at`, `facts_fetched_at` |
+| `tickers` | Ticker | `ticker`, `cik`, `is_primary`. Multi-class companies (GOOGL and GOOG) have one company and several tickers |
+| `facts` | Company, metric, period | `cik`, `metric`, `period_start` (null for balance sheet items), `period_end`, `fiscal_period` (FY, or Q1 to Q3 for year-to-date periods), `value`, `form`, `filed_at`, `accession`, `source_tag` (`derived` when computed from other metrics) |
+| `ratios` | Company | `cik`, `as_of`, `ttm_basis`, `fundamentals_through`, one column per ratio on the stock page, the inputs that price-based ratios need (`shares_outstanding`, `equity`, `debt`, `cash`, `eps_ttm`, ...), `lynch_category`, `lynch_score` |
 | `ratio_history` | Company, fiscal year | `cik`, `fiscal_year`, the same ratio columns, used for the 5-year range bars |
 | `sector_medians` | Sector | `sector`, `as_of`, median of each ratio |
 | `prices_daily` | Ticker, day | `ticker`, `date`, `open`, `high`, `low`, `close` |
 | `quotes` | Ticker | `ticker`, `price`, `change`, `change_pct`, `prev_close`, `fetched_at` |
-| `filings` | Filing | `cik`, `accession`, `form`, `period`, `filed_at`, `title`, `url` |
+| `filings` | Company, filing | `cik`, `accession`, `form`, `period`, `filed_at`, `title`, `url`. Keyed by both: one filing can be listed under several companies |
 | `watchlist` | Ticker | `ticker`, `added_at`, `position` |
 | `insider_trades` | Form 4 transaction | `cik`, `filed_at`, `person`, `role`, `code`, `shares`, `price` |
 | `transactions` | Trade or cash movement | `id`, `date`, `type`, `ticker`, `shares`, `price`, `amount`, `note` |
@@ -161,30 +162,38 @@ Companies tag the same line item differently. For each metric, try the tags in o
 
 | Metric | Tags, in priority order |
 | --- | --- |
-| `revenue` | `RevenueFromContractWithCustomerExcludingAssessedTax`, `Revenues`, `SalesRevenueNet`, `RevenueFromContractWithCustomerIncludingAssessedTax` |
-| `cost_of_revenue` | `CostOfRevenue`, `CostOfGoodsAndServicesSold`, `CostOfGoodsSold` |
+| `revenue` | `RevenuesNetOfInterestExpense` when present (banks, brokers). Otherwise the **largest** of `RevenueFromContractWithCustomerExcludingAssessedTax`, `Revenues`, `SalesRevenueNet`, `RevenueFromContractWithCustomerIncludingAssessedTax`, contract revenue + `OperatingLeaseLeaseIncome` (REITs, lessors), and `InterestIncomeExpenseNet` + `NoninterestIncome` (banks). See the note below the table |
+| `cost_of_revenue` | `CostOfRevenue`, `CostOfGoodsAndServicesSold`, `CostOfGoodsSold`, `CostOfGoodsAndServiceExcludingDepreciationDepletionAndAmortization` |
 | `gross_profit` | `GrossProfit`, else `revenue` minus `cost_of_revenue` |
 | `operating_income` | `OperatingIncomeLoss` |
-| `pretax_income` | `IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest` |
+| `pretax_income` | `IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest`, `IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments` |
 | `income_tax` | `IncomeTaxExpenseBenefit` |
-| `net_income` | `NetIncomeLoss`, `ProfitLoss` |
-| `eps_diluted` | `EarningsPerShareDiluted`, `EarningsPerShareBasic` |
+| `net_income` | `NetIncomeLoss`, `NetIncomeLossAvailableToCommonStockholdersBasic`, `ProfitLoss` |
+| `eps_diluted` | `EarningsPerShareDiluted`, `IncomeLossFromContinuingOperationsPerDilutedShare`, `EarningsPerShareBasic`, else `net_income` / `shares_diluted` for the same period (multi-class companies report EPS only per class) |
 | `shares_diluted` | `WeightedAverageNumberOfDilutedSharesOutstanding` |
 | `shares_outstanding` | `dei:EntityCommonStockSharesOutstanding`, `CommonStockSharesOutstanding` |
-| `depreciation_amortization` | `DepreciationDepletionAndAmortization`, `DepreciationAndAmortization`, `DepreciationAmortizationAndAccretionNet` |
+| `depreciation_amortization` | `DepreciationDepletionAndAmortization`, `DepreciationAndAmortization`, `DepreciationAmortizationAndAccretionNet`, else `Depreciation` + `AmortizationOfIntangibleAssets` |
 | `interest_expense` | `InterestExpense`, `InterestExpenseNonoperating`, `InterestExpenseDebt` |
-| `cash` | `CashAndCashEquivalentsAtCarryingValue`, plus `ShortTermInvestments` when present |
-| `debt` | `LongTermDebtNoncurrent` + `LongTermDebtCurrent` + `ShortTermBorrowings` + `CommercialPaper`, else `LongTermDebt`, else `DebtLongtermAndShorttermCombinedAmount` |
-| `equity` | `StockholdersEquity` |
+| `cash` | `CashAndCashEquivalentsAtCarryingValue`, `CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents`, `Cash`, `CashAndDueFromBanks`, plus `ShortTermInvestments` when present |
+| `debt` | Noncurrent (`LongTermDebtNoncurrent`, `LongTermDebtAndCapitalLeaseObligations`, `UnsecuredLongTermDebt`, `SeniorLongTermNotes`, `LongTermNotesPayable`, `LongTermNotesAndLoans`, `ConvertibleLongTermNotesPayable`, `ConvertibleDebtNoncurrent`) + current (`DebtCurrent` if reported, else `LongTermDebtCurrent` or `LongTermDebtAndCapitalLeaseObligationsCurrent` or `ConvertibleNotesPayableCurrent` or `NotesPayableCurrent`, plus `ShortTermBorrowings` + `CommercialPaper`). Else `LongTermDebt` or `LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities`, plus `ShortTermBorrowings` + `CommercialPaper`. Else `DebtLongtermAndShorttermCombinedAmount`, `DebtAndCapitalLeaseObligations`, `NotesPayable`, `SeniorNotes`. Else short-term debt alone |
+| `equity` | `StockholdersEquity`, `StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest` |
 | `total_assets` | `Assets` |
 | `current_assets` | `AssetsCurrent` |
 | `current_liabilities` | `LiabilitiesCurrent` |
 | `inventory` | `InventoryNet` |
-| `operating_cash_flow` | `NetCashProvidedByUsedInOperatingActivities` |
-| `capex` | `PaymentsToAcquirePropertyPlantAndEquipment` |
-| `dividends_per_share` | `CommonStockDividendsPerShareDeclared` |
+| `operating_cash_flow` | `NetCashProvidedByUsedInOperatingActivities`, `NetCashProvidedByUsedInOperatingActivitiesContinuingOperations` |
+| `capex` | `PaymentsToAcquirePropertyPlantAndEquipment`, `PaymentsToAcquireProductiveAssets`, `PaymentsForCapitalImprovements`, `PaymentsToAcquireOilAndGasPropertyAndEquipment` |
+| `dividends_per_share` | `CommonStockDividendsPerShareDeclared`, `CommonStockDividendsPerShareCashPaid` |
 
-This list is a starting map written from general knowledge of the taxonomy. It has not been verified tag by tag. Phase 1 includes a script that reports, per metric, how many S&P 500 companies resolved, so gaps show up as numbers. Extend the map where coverage is low.
+The map started from general knowledge of the taxonomy and was extended in phase 1 from the coverage report (`make coverage`), which shows per metric how many S&P 500 companies resolve. Extend it the same way: run the report, look at which tags the missing companies use, add them, re-run.
+
+**Why revenue is "largest", not "first".** The spec's original order put `RevenueFromContractWithCustomerExcludingAssessedTax` first. That tag covers ASC 606 contract revenue only. It leaves out rent (ASC 842), interest, and insurance premiums, so for REITs, lessors, banks, and insurers it is a small slice of revenue: Essex Property Trust showed $10M of revenue against $410M of net income. Taking the largest candidate per period gives the top line whichever tags a company uses. Lease income on its own is never revenue, since for most companies it is a side item.
+
+**Gaps the free API cannot fill.** The companyfacts API only returns facts that apply to the whole company, without dimensions. Companies that report a line only by segment or class have no value for it. Known cases: Caterpillar, Ford, and GM split debt between industrial and finance arms; APA reports revenue only by product; Visa, Berkshire, Hershey, and other multi-class companies report EPS only per class (EPS falls back to net income over diluted shares where that exists). These stay blank rather than estimated.
+
+**EDGAR can lag a filing.** Visa's 10-Q filed 2026-07-29 was not in its companyfacts on 2026-10-07, so Visa's figures ran through March. The nightly refresh (phase 4) picks such filings up once EDGAR does.
+
+**Predecessor companies.** When a new holding company replaces a filer, its history stays under the old CIK. `backend/app/data/predecessors.csv` maps the new CIK to the old one and the loader merges their facts, the newer filing winning where both report a period. ExxonMobil Holdings (2026) is the first entry.
 
 The 90% coverage target in phase 1 applies to the core metrics, which every operating company reports: `revenue`, `net_income`, `eps_diluted`, `equity`, `total_assets`, `shares_outstanding`, `operating_cash_flow`, `cash`, and `debt`. The other metrics do not exist for every business (banks have no inventory or gross profit, many companies pay no dividend), so the report shows their coverage among the companies they apply to but does not gate the phase. Banks need extra revenue tags to reach 90% on `revenue`.
 
@@ -193,7 +202,10 @@ The 90% coverage target in phase 1 applies to the core metrics, which every oper
 - Use each fact's own `start` and `end` dates to decide what period it covers. Do not trust the `fy` and `fp` fields for this. They describe the filing the fact appeared in, so prior-year comparison numbers carry the wrong year.
 - The same period appears in several filings. Keep the value with the latest `filed` date, which picks up restatements.
 - Income and cash flow facts in a 10-Q come as 3-month and year-to-date figures. There is no separate fourth quarter.
-- Balance sheet facts are point-in-time. Use the latest one.
+- Balance sheet facts are point-in-time. Read every balance sheet item on the latest balance sheet date. An item last reported on an older date (debt since paid off, say) is missing, not stale.
+- A year-to-date period starts the day after a fiscal year end and runs 75 to 300 days. The window is wide because some retailers (Kroger, AutoZone) use 16-week quarters. The prior-year figure is the period of the same length (within 10 days) ending about a year earlier.
+- Fiscal years are named by the calendar year they end in. A 52/53-week year ending in the first week of January belongs to the year before.
+- Growth rates (1, 3, 5 years) compare fiscal-year values, not trailing twelve months.
 
 Trailing twelve months for any income or cash flow metric:
 
@@ -238,7 +250,7 @@ Ratios that use price are recomputed whenever a new quote arrives. The rest chan
 - **Banks and insurers** have no gross profit, EBITDA, or current ratio. Leave those blank for SIC codes 6000 to 6499.
 - **Multi-class shares.** The EDGAR APIs only return facts that apply to the whole company, so share counts split by class can be missing. Fall back to the latest `shares_diluted`.
 - **Foreign filers** on forms 20-F and 40-F often use the `ifrs-full` taxonomy. Version 1 covers `us-gaap` filers only and labels the others as unsupported.
-- **Stock splits** change EPS and share counts across history. EPS history from the latest 10-K is already restated for the years it covers.
+- **Stock splits** change EPS and share counts across history. EPS history from the latest 10-K is already restated for the years it covers. Older years are restated by comparing each filing's values with the newer filing's values for the same periods: a ratio that matches a split (2, 3, 4, 10, 20, and so on, or a reverse split) rescales everything only that older filing covers. NVIDIA's fiscal 2021 EPS of $6.90 becomes $0.17 after its 4-for-1 and 10-for-1 splits. A split inside the current fiscal year, before the next 10-K, is not caught: trailing EPS can mix bases for those months.
 - **Fiscal years** do not all end in December. Sector medians compare each company's latest TTM, whatever month it ends.
 
 **Sector medians and 5-year range**
