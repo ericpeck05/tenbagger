@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Portfolio</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#000000}
+button{font:inherit}
+a{color:#E0E0E0}a:hover{color:#FFFFFF}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #000000; color: #F2F2F2; font-family: 'IBM Plex Mono', monospace; font-size: 13px; line-height: 1.4">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 8px 20px; border-bottom: 1px solid #2A2A2A; background: #000000">
+<div style="font-size: 15px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: {{accent}}">Tenbagger</div>
+<button type="button" style="flex: 1 1 280px; max-width: 560px; min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 12px; background: #0A0A0A; color: #9A9A9A; border: 1px solid #3A3A3A; border-radius: 0; text-align: left; cursor: pointer">
+<span style="font-weight: 600; color: {{accent}}">&gt;</span>
+<span aria-hidden="true" style="width: 8px; height: 16px; background: {{accent}}"></span>
+<span style="flex: 1; text-align: right">Ticker, company, or command</span>
+<span style="font-size: 12px; padding: 1px 6px; border: 1px solid #3A3A3A">/</span>
+</button>
+<nav aria-label="Sections" style="display: flex; flex-wrap: wrap; gap: 2px">
+<a href="Main.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; color: #9A9A9A">Stock</a>
+<a href="#" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; background: {{accent}}; color: #000000">Portfolio</a>
+<a href="#" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; color: #9A9A9A">Screener</a>
+<a href="#" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; color: #9A9A9A">Watchlists</a>
+</nav>
+<div style="margin-left: auto; display: flex; align-items: center; gap: 8px; color: #9A9A9A; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em">
+<span style="width: 8px; height: 8px; background: #2BD67B"></span>
+<span>Market open, quotes 2 min old</span>
+</div>
+</header>
+
+<nav aria-label="Jump to panel" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; padding: 4px 20px; border-bottom: 1px solid #2A2A2A; background: #0A0A0A; font-size: 12px">
+<a href="#performance" style="display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 8px 0 0; text-decoration: none; text-transform: uppercase; letter-spacing: 0.06em; color: #C8C8C8"><span style="font-weight: 600; padding: 0 6px; background: {{accent}}; color: #000000">1</span>Performance</a>
+<a href="#allocation" style="display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 8px 0 0; text-decoration: none; text-transform: uppercase; letter-spacing: 0.06em; color: #C8C8C8"><span style="font-weight: 600; padding: 0 6px; background: {{accent}}; color: #000000">2</span>Allocation</a>
+<a href="#holdings" style="display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 8px 0 0; text-decoration: none; text-transform: uppercase; letter-spacing: 0.06em; color: #C8C8C8"><span style="font-weight: 600; padding: 0 6px; background: {{accent}}; color: #000000">3</span>Holdings</a>
+<a href="#lookthrough" style="display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 8px 0 0; text-decoration: none; text-transform: uppercase; letter-spacing: 0.06em; color: #C8C8C8"><span style="font-weight: 600; padding: 0 6px; background: {{accent}}; color: #000000">4</span>Look-through</a>
+<a href="#activity" style="display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 8px 0 0; text-decoration: none; text-transform: uppercase; letter-spacing: 0.06em; color: #C8C8C8"><span style="font-weight: 600; padding: 0 6px; background: {{accent}}; color: #000000">5</span>Activity</a>
+<a href="#filings" style="display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 8px 0 0; text-decoration: none; text-transform: uppercase; letter-spacing: 0.06em; color: #C8C8C8"><span style="font-weight: 600; padding: 0 6px; background: {{accent}}; color: #000000">6</span>Filings</a>
+<span style="margin-left: auto; color: #9A9A9A; text-transform: uppercase; letter-spacing: 0.06em">Press a number to jump, T to add a trade</span>
+</nav>
+
+<main style="max-width: 1440px; margin: 0 auto; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+
+<section style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between; align-items: flex-end">
+<div style="display: flex; flex-direction: column; gap: 10px; min-width: 0">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+<h1 style="margin: 0; font-size: 30px; font-weight: 600; line-height: 1; letter-spacing: 0.04em; text-transform: uppercase; color: {{accent}}">Portfolio</h1>
+<span style="font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 18px; color: #F2F2F2">Main account</span>
+<span style="font-size: 11px; padding: 2px 6px; border: 1px solid #3A3A3A; color: #9A9A9A; text-transform: uppercase; letter-spacing: 0.06em">7 positions</span>
+<span style="font-size: 11px; padding: 2px 6px; border: 1px dashed #9A9A9A; color: #C8C8C8; text-transform: uppercase; letter-spacing: 0.06em">Sample data</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 14px">
+<span style="font-size: 42px; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums">37,585.00</span>
+<span style="font-size: 16px; color: #2BD67B">+139.78 +0.37%</span>
+<span style="font-size: 12px; color: #9A9A9A; text-transform: uppercase; letter-spacing: 0.06em">USD, today</span>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; border: 1px solid #2A2A2A; background: #0A0A0A">
+<div style="padding: 8px 14px; border-right: 1px solid #2A2A2A">
+<div style="font-size: 11px; color: {{accent}}; text-transform: uppercase; letter-spacing: 0.08em">Total gain</div>
+<div style="font-size: 16px; font-weight: 500; color: #2BD67B">+5,061.00</div>
+</div>
+<div style="padding: 8px 14px; border-right: 1px solid #2A2A2A">
+<div style="font-size: 11px; color: {{accent}}; text-transform: uppercase; letter-spacing: 0.08em">Gain %</div>
+<div style="font-size: 16px; font-weight: 500; color: #2BD67B">+16.2%</div>
+</div>
+<div style="padding: 8px 14px; border-right: 1px solid #2A2A2A">
+<div style="font-size: 11px; color: {{accent}}; text-transform: uppercase; letter-spacing: 0.08em">Cost basis</div>
+<div style="font-size: 16px; font-weight: 500">31,274.00</div>
+</div>
+<div style="padding: 8px 14px; border-right: 1px solid #2A2A2A">
+<div style="font-size: 11px; color: {{accent}}; text-transform: uppercase; letter-spacing: 0.08em">Cash</div>
+<div style="font-size: 16px; font-weight: 500">1,250.00</div>
+</div>
+<div style="padding: 8px 14px">
+<div style="font-size: 11px; color: {{accent}}; text-transform: uppercase; letter-spacing: 0.08em">1Y vs benchmark</div>
+<div style="font-size: 16px; font-weight: 500; color: #2BD67B">+2.7 pts</div>
+</div>
+</div>
+<button type="button" style="min-height: 44px; padding: 0 16px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; border: 0; border-radius: 0; cursor: pointer; background: {{accent}}; color: #000000">Add trade</button>
+</div>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px">
+
+<section id="performance" style="flex: 3 1 560px; min-width: 0; display: flex; flex-direction: column; background: #0A0A0A; border: 1px solid #2A2A2A">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 12px; padding: 4px 6px 4px 10px; background: #141414; border-bottom: 1px solid #2A2A2A">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+<span aria-hidden="true" style="font-size: 12px; font-weight: 600; padding: 0 6px; background: {{accent}}; color: #000000">1</span>
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: {{accent}}">Performance</h2>
+<span style="font-size: 12px; color: #9A9A9A; text-transform: uppercase; letter-spacing: 0.06em">Return, 1 year</span>
+</div>
+<div role="group" aria-label="Chart range" style="display: flex; gap: 0; border: 1px solid #3A3A3A">
+<button type="button" style="min-width: 44px; min-height: 40px; padding: 0 8px; background: transparent; color: #9A9A9A; border: 0; border-radius: 0; cursor: pointer">1M</button>
+<button type="button" style="min-width: 44px; min-height: 40px; padding: 0 8px; background: transparent; color: #9A9A9A; border: 0; border-radius: 0; cursor: pointer">6M</button>
+<button type="button" style="min-width: 44px; min-height: 40px; padding: 0 8px; background: transparent; color: #9A9A9A; border: 0; border-radius: 0; cursor: pointer">YTD</button>
+<button type="button" aria-pressed="true" style="min-width: 44px; min-height: 40px; padding: 0 8px; background: {{accent}}; color: #000000; font-weight: 600; border: 0; border-radius: 0; cursor: pointer">1Y</button>
+<button type="button" style="min-width: 44px; min-height: 40px; padding: 0 8px; background: transparent; color: #9A9A9A; border: 0; border-radius: 0; cursor: pointer">ALL</button>
+</div>
+</div>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 12px">
+<div style="display: flex; flex-wrap: wrap; gap: 4px 22px; font-size: 13px">
+<span style="display: inline-flex; align-items: center; gap: 8px"><span aria-hidden="true" style="width: 16px; height: 3px; background: {{accent}}"></span>Portfolio <span style="color: #2BD67B">+14.8%</span></span>
+<span style="display: inline-flex; align-items: center; gap: 8px"><span aria-hidden="true" style="width: 16px; height: 0; border-top: 2px dashed #9A9A9A"></span>Benchmark <span style="color: #2BD67B">+12.1%</span></span>
+</div>
+<div style="flex: 1; display: flex; gap: 10px; min-height: 380px">
+<div style="position: relative; flex: 1; min-width: 0">
+<svg viewBox="0 0 1000 300" preserveAspectRatio="none" role="img" aria-label="One year return: the portfolio ends up 14.8 percent, ahead of the benchmark at 12.1 percent" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block">
+<path d="M0 182.1 H1000 M0 128.6 H1000 M0 75.0 H1000 M0 21.4 H1000" style="fill: none; stroke: #2A2A2A; stroke-width: 1; stroke-dasharray: 2 4; vector-effect: non-scaling-stroke"></path>
+<path d="M0 235.7 H1000" style="fill: none; stroke: #5A5A5A; stroke-width: 1; vector-effect: non-scaling-stroke"></path>
+<path d="M0.0 235.7 L19.6 240.6 L39.2 237.9 L58.8 233.5 L78.4 237.5 L98.0 247.3 L117.6 250.3 L137.3 241.7 L156.9 232.2 L176.5 233.2 L196.1 240.5 L215.7 240.6 L235.3 229.9 L254.9 219.7 L274.5 219.7 L294.1 224.2 L313.7 220.8 L333.3 208.0 L352.9 197.1 L372.5 194.5 L392.2 192.7 L411.8 182.1 L431.4 167.0 L451.0 160.9 L470.6 168.0 L490.2 177.2 L509.8 177.3 L529.4 171.3 L549.0 170.2 L568.6 174.6 L588.2 173.1 L607.8 159.2 L627.5 142.0 L647.1 135.1 L666.7 138.8 L686.3 141.2 L705.9 136.5 L725.5 132.7 L745.1 138.5 L764.7 148.2 L784.3 148.1 L803.9 135.2 L823.5 121.1 L843.1 116.1 L862.7 115.9 L882.4 109.8 L902.0 98.9 L921.6 95.0 L941.2 103.6 L960.8 114.7 L980.4 115.2 L1000.0 106.1" style="fill: none; stroke: #9A9A9A; stroke-width: 1.5; stroke-dasharray: 5 4; vector-effect: non-scaling-stroke"></path>
+<path d="M0.0 235.7 L19.6 221.6 L39.2 227.8 L58.8 235.6 L78.4 231.2 L98.0 225.9 L117.6 237.6 L137.3 262.1 L156.9 276.2 L176.5 268.8 L196.1 254.2 L215.7 249.1 L235.3 248.1 L254.9 233.3 L274.5 205.0 L294.1 185.9 L313.7 191.7 L333.3 208.8 L352.9 212.1 L372.5 197.8 L392.2 184.6 L411.8 183.9 L431.4 182.9 L451.0 165.3 L470.6 138.8 L490.2 127.4 L509.8 138.9 L529.4 154.8 L549.0 155.9 L568.6 147.9 L588.2 149.1 L607.8 160.2 L627.5 160.8 L647.1 139.0 L666.7 110.4 L686.3 98.5 L705.9 104.1 L725.5 107.4 L745.1 98.8 L764.7 92.8 L784.3 104.6 L803.9 124.2 L823.5 127.5 L843.1 108.5 L862.7 86.8 L882.4 79.9 L902.0 79.9 L921.6 69.0 L941.2 49.1 L960.8 41.6 L980.4 56.7 L1000.0 77.1" style="fill: none; stroke: {{accent}}; stroke-width: 2; stroke-linejoin: round; vector-effect: non-scaling-stroke"></path>
+</svg>
+</div>
+<div aria-hidden="true" style="position: relative; width: 60px; font-size: 12px; color: #9A9A9A">
+<span style="position: absolute; left: 0; top: 7.1%; transform: translateY(-50%)">+20%</span>
+<span style="position: absolute; left: 0; top: 25.7%; transform: translateY(-50%); padding: 1px 4px; margin-left: -4px; font-weight: 600; background: {{accent}}; color: #000000">+14.8%</span>
+<span style="position: absolute; left: 0; top: 35.4%; transform: translateY(-50%); padding: 1px 4px; margin-left: -4px; font-weight: 600; background: #3A3A3A; color: #F2F2F2">+12.1%</span>
+<span style="position: absolute; left: 0; top: 60.7%; transform: translateY(-50%)">+5%</span>
+<span style="position: absolute; left: 0; top: 78.6%; transform: translateY(-50%)">0%</span>
+</div>
+</div>
+<div aria-hidden="true" style="display: flex; justify-content: space-between; padding-right: 70px; font-size: 12px; color: #9A9A9A; text-transform: uppercase">
+<span>Oct</span>
+<span>Dec</span>
+<span>Feb</span>
+<span>Apr</span>
+<span>Jun</span>
+<span>Aug</span>
+<span>Oct</span>
+</div>
+</div>
+</section>
+
+<section id="allocation" style="flex: 2 1 380px; min-width: 0; background: #0A0A0A; border: 1px solid #2A2A2A">
+<div style="display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 10px; background: #141414; border-bottom: 1px solid #2A2A2A">
+<span aria-hidden="true" style="font-size: 12px; font-weight: 600; padding: 0 6px; background: {{accent}}; color: #000000">2</span>
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: {{accent}}">Allocation</h2>
+</div>
+<div style="display: flex; flex-direction: column; gap: 18px; padding: 14px">
+<div>
+<div style="margin-bottom: 6px; font-size: 11px; color: #9A9A9A; text-transform: uppercase; letter-spacing: 0.08em">By Lynch category</div>
+<div style="display: grid; grid-template-columns: 124px minmax(0, 1fr) 52px; column-gap: 10px; align-items: center; min-height: 26px"><span style="font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px">Fast grower</span><span aria-hidden="true" style="height: 10px; background: #1A1A1A"><span style="display: block; width: 79%; height: 100%; background: {{accent}}"></span></span><span style="text-align: right; font-weight: 600">26.2%</span></div>
+<div style="display: grid; grid-template-columns: 124px minmax(0, 1fr) 52px; column-gap: 10px; align-items: center; min-height: 26px"><span style="font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px">Stalwart</span><span aria-hidden="true" style="height: 10px; background: #1A1A1A"><span style="display: block; width: 58%; height: 100%; background: {{accent}}"></span></span><span style="text-align: right; font-weight: 600">19.2%</span></div>
+<div style="display: grid; grid-template-columns: 124px minmax(0, 1fr) 52px; column-gap: 10px; align-items: center; min-height: 26px"><span style="font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px">Cyclical</span><span aria-hidden="true" style="height: 10px; background: #1A1A1A"><span style="display: block; width: 31%; height: 100%; background: {{accent}}"></span></span><span style="text-align: right; font-weight: 600">10.3%</span></div>
+<div style="display: grid; grid-template-columns: 124px minmax(0, 1fr) 52px; column-gap: 10px; align-items: center; min-height: 26px"><span style="font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px">Slow grower</span><span aria-hidden="true" style="height: 10px; background: #1A1A1A"><span style="display: block; width: 29%; height: 100%; background: {{accent}}"></span></span><span style="text-align: right; font-weight: 600">9.8%</span></div>
+<div style="display: grid; grid-template-columns: 124px minmax(0, 1fr) 52px; column-gap: 10px; align-items: center; min-height: 26px"><span style="font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; color: #C8C8C8">Index funds</span><span aria-hidden="true" style="height: 10px; background: #1A1A1A"><span style="display: block; width: 93%; height: 100%; background: #6A6A6A"></span></span><span style="text-align: right; font-weight: 600">31.1%</span></div>
+<div style="display: grid; grid-template-columns: 124px minmax(0, 1fr) 52px; column-gap: 10px; align-items: center; min-height: 26px"><span style="font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; color: #C8C8C8">Cash</span><span aria-hidden="true" style="height: 10px; background: #1A1A1A"><span style="display: block; width: 10%; height: 100%; background: #6A6A6A"></span></span><span style="text-align: right; font-weight: 600">3.3%</span></div>
+</div>
+<div>
+<div style="margin-bottom: 6px; font-size: 11px; color: #9A9A9A; text-transform: uppercase; letter-spacing: 0.08em">Stocks by sector</div>
+<div style="display: grid; grid-template-columns: 124px minmax(0, 1fr) 52px; column-gap: 10px; align-items: center; min-height: 26px"><span style="font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px">Specialty retail</span><span aria-hidden="true" style="height: 10px; background: #1A1A1A"><span style="display: block; width: 46%; height: 100%; background: {{accent}}"></span></span><span style="text-align: right; font-weight: 600">15.4%</span></div>
+<div style="display: grid; grid-template-columns: 124px minmax(0, 1fr) 52px; column-gap: 10px; align-items: center; min-height: 26px"><span style="font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px">Robotics</span><span aria-hidden="true" style="height: 10px; background: #1A1A1A"><span style="display: block; width: 32%; height: 100%; background: {{accent}}"></span></span><span style="text-align: right; font-weight: 600">10.8%</span></div>
+<div style="display: grid; grid-template-columns: 124px minmax(0, 1fr) 52px; column-gap: 10px; align-items: center; min-height: 26px"><span style="font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px">Freight</span><span aria-hidden="true" style="height: 10px; background: #1A1A1A"><span style="display: block; width: 31%; height: 100%; background: {{accent}}"></span></span><span style="text-align: right; font-weight: 600">10.3%</span></div>
+<div style="display: grid; grid-template-columns: 124px minmax(0, 1fr) 52px; column-gap: 10px; align-items: center; min-height: 26px"><span style="font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px">Packaged food</span><span aria-hidden="true" style="height: 10px; background: #1A1A1A"><span style="display: block; width: 31%; height: 100%; background: {{accent}}"></span></span><span style="text-align: right; font-weight: 600">10.2%</span></div>
+<div style="display: grid; grid-template-columns: 124px minmax(0, 1fr) 52px; column-gap: 10px; align-items: center; min-height: 26px"><span style="font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px">Banks</span><span aria-hidden="true" style="height: 10px; background: #1A1A1A"><span style="display: block; width: 29%; height: 100%; background: {{accent}}"></span></span><span style="text-align: right; font-weight: 600">9.8%</span></div>
+<div style="display: grid; grid-template-columns: 124px minmax(0, 1fr) 52px; column-gap: 10px; align-items: center; min-height: 26px"><span style="font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px">Marine supply</span><span aria-hidden="true" style="height: 10px; background: #1A1A1A"><span style="display: block; width: 27%; height: 100%; background: {{accent}}"></span></span><span style="text-align: right; font-weight: 600">9.0%</span></div>
+</div>
+</div>
+</section>
+
+</div>
+
+<section id="holdings" style="background: #0A0A0A; border: 1px solid #2A2A2A">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 12px; min-height: 36px; padding: 0 10px; background: #141414; border-bottom: 1px solid #2A2A2A">
+<div style="display: flex; align-items: center; gap: 10px">
+<span aria-hidden="true" style="font-size: 12px; font-weight: 600; padding: 0 6px; background: {{accent}}; color: #000000">3</span>
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: {{accent}}">Holdings</h2>
+</div>
+<span style="font-size: 12px; color: #9A9A9A; text-transform: uppercase; letter-spacing: 0.06em">Sorted by value, click a column to sort</span>
+</div>
+<div style="overflow-x: auto">
+<div style="min-width: 1180px; padding: 6px 14px 8px">
+<div style="display: grid; grid-template-columns: minmax(200px, 1fr) 64px 80px 80px 72px 104px 104px 72px 110px 120px 56px 56px 56px; column-gap: 12px; padding: 6px 0; font-size: 11px; color: #9A9A9A; text-transform: uppercase; letter-spacing: 0.06em">
+<div>Position</div>
+<div style="text-align: right">Shares</div>
+<div style="text-align: right">Avg cost</div>
+<div style="text-align: right">Price</div>
+<div style="text-align: right">Day</div>
+<div style="text-align: right; color: {{accent}}">Value ▼</div>
+<div style="text-align: right">Gain</div>
+<div style="text-align: right">Gain %</div>
+<div>Weight</div>
+<div>Category</div>
+<div style="text-align: right">Lynch</div>
+<div style="text-align: right">P/E</div>
+<div style="text-align: right">PEG</div>
+</div>
+<sc-for list="{{holdings}}" as="h" hint-placeholder-count="7">
+<a href="Main.dc.html" style="display: grid; grid-template-columns: minmax(200px, 1fr) 64px 80px 80px 72px 104px 104px 72px 110px 120px 56px 56px 56px; column-gap: 12px; align-items: center; min-height: 44px; border-top: 1px solid #1A1A1A; text-decoration: none; color: #F2F2F2; font-variant-numeric: tabular-nums">
+<div style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis"><span style="display: inline-block; min-width: 52px; font-weight: 600; color: {{h.accent}}">{{h.t}}</span><span style="font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; color: #C8C8C8">{{h.n}}</span></div>
+<div style="text-align: right">{{h.sh}}</div>
+<div style="text-align: right; color: #C8C8C8">{{h.cost}}</div>
+<div style="text-align: right">{{h.px}}</div>
+<div style="text-align: right; color: {{h.dayC}}">{{h.day}}</div>
+<div style="text-align: right; font-weight: 600">{{h.val}}</div>
+<div style="text-align: right; color: {{h.gC}}">{{h.gain}}</div>
+<div style="text-align: right; color: {{h.gC}}">{{h.gainP}}</div>
+<div style="display: flex; align-items: center; gap: 8px"><span aria-hidden="true" style="flex: 1; height: 8px; background: #1A1A1A"><span style="display: block; height: 100%; background: {{h.accent}}; width: {{h.wbar}}"></span></span><span style="min-width: 44px; text-align: right">{{h.w}}</span></div>
+<div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #C8C8C8">{{h.cat}}</div>
+<div style="text-align: right; font-weight: 600; color: {{h.sC}}">{{h.score}}</div>
+<div style="text-align: right">{{h.pe}}</div>
+<div style="text-align: right">{{h.peg}}</div>
+</a>
+</sc-for>
+<div style="display: grid; grid-template-columns: minmax(200px, 1fr) 64px 80px 80px 72px 104px 104px 72px 110px 120px 56px 56px 56px; column-gap: 12px; align-items: center; min-height: 40px; border-top: 1px solid #1A1A1A; color: #C8C8C8">
+<div><span style="display: inline-block; min-width: 52px; font-weight: 600">CASH</span><span style="font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px">Uninvested</span></div>
+<div></div>
+<div></div>
+<div></div>
+<div></div>
+<div style="text-align: right; font-weight: 600; color: #F2F2F2">1,250.00</div>
+<div></div>
+<div></div>
+<div style="display: flex; align-items: center; gap: 8px"><span aria-hidden="true" style="flex: 1; height: 8px; background: #1A1A1A"><span style="display: block; width: 10%; height: 100%; background: #6A6A6A"></span></span><span style="min-width: 44px; text-align: right">3.3%</span></div>
+<div></div>
+<div></div>
+<div></div>
+<div></div>
+</div>
+<div style="display: grid; grid-template-columns: minmax(200px, 1fr) 64px 80px 80px 72px 104px 104px 72px 110px 120px 56px 56px 56px; column-gap: 12px; align-items: center; min-height: 44px; border-top: 1px solid #3A3A3A; font-weight: 600">
+<div style="color: {{accent}}; text-transform: uppercase; letter-spacing: 0.08em">Total</div>
+<div></div>
+<div style="text-align: right">31,274.00</div>
+<div></div>
+<div style="text-align: right; color: #2BD67B">+0.37%</div>
+<div style="text-align: right">37,585.00</div>
+<div style="text-align: right; color: #2BD67B">+5,061.00</div>
+<div style="text-align: right; color: #2BD67B">+16.2%</div>
+<div style="text-align: right">100%</div>
+<div></div>
+<div style="text-align: right">71</div>
+<div style="text-align: right">16.7</div>
+<div style="text-align: right">1.04</div>
+</div>
+</div>
+</div>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px">
+
+<section id="lookthrough" style="flex: 1 1 340px; min-width: 0; background: #0A0A0A; border: 1px solid #2A2A2A">
+<div style="display: flex; align-items: center; gap: 10px; min-height: 34px; padding: 0 10px; background: #141414; border-bottom: 1px solid #2A2A2A">
+<span aria-hidden="true" style="font-size: 12px; font-weight: 600; padding: 0 6px; background: {{accent}}; color: #000000">4</span>
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: {{accent}}">Look-through</h2>
+</div>
+<div style="padding: 14px">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1px; background: #2A2A2A; border: 1px solid #2A2A2A">
+<div style="padding: 10px 12px; background: #0A0A0A"><div style="font-size: 11px; color: #9A9A9A; text-transform: uppercase; letter-spacing: 0.08em">P/E</div><div style="font-size: 22px; font-weight: 500">16.7</div></div>
+<div style="padding: 10px 12px; background: #0A0A0A"><div style="font-size: 11px; color: #9A9A9A; text-transform: uppercase; letter-spacing: 0.08em">EPS growth</div><div style="font-size: 22px; font-weight: 500">16.1%</div></div>
+<div style="padding: 10px 12px; background: #0A0A0A"><div style="font-size: 11px; color: #9A9A9A; text-transform: uppercase; letter-spacing: 0.08em">PEG</div><div style="font-size: 22px; font-weight: 500">1.04</div></div>
+<div style="padding: 10px 12px; background: #0A0A0A"><div style="font-size: 11px; color: #9A9A9A; text-transform: uppercase; letter-spacing: 0.08em">Lynch score</div><div style="font-size: 22px; font-weight: 500; color: {{accent}}">71</div></div>
+<div style="padding: 10px 12px; background: #0A0A0A"><div style="font-size: 11px; color: #9A9A9A; text-transform: uppercase; letter-spacing: 0.08em">Largest stock</div><div style="font-size: 22px; font-weight: 500">15.4%</div></div>
+<div style="padding: 10px 12px; background: #0A0A0A"><div style="font-size: 11px; color: #9A9A9A; text-transform: uppercase; letter-spacing: 0.08em">Below cost</div><div style="font-size: 22px; font-weight: 500">1 of 7</div></div>
+</div>
+<p style="margin: 10px 0 0; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13px; color: #9A9A9A">The six stocks treated as one company, weighted by value. Index funds and cash are left out.</p>
+</div>
+</section>
+
+<section id="activity" style="flex: 1 1 340px; min-width: 0; background: #0A0A0A; border: 1px solid #2A2A2A">
+<div style="display: flex; align-items: center; gap: 10px; min-height: 34px; padding: 0 10px; background: #141414; border-bottom: 1px solid #2A2A2A">
+<span aria-hidden="true" style="font-size: 12px; font-weight: 600; padding: 0 6px; background: {{accent}}; color: #000000">5</span>
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: {{accent}}">Activity</h2>
+</div>
+<div style="padding: 0 14px">
+<div style="display: grid; grid-template-columns: 84px 64px minmax(0, 1fr) 84px; column-gap: 10px; align-items: center; min-height: 44px; border-bottom: 1px solid #1A1A1A"><span style="color: #9A9A9A">2026-09-22</span><span style="text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; padding: 2px 0; border: 1px solid #2BD67B; color: #2BD67B">BUY</span><span><span style="font-weight: 600">OSLO</span> 50 @ 28.40</span><span style="text-align: right">1,420.00</span></div>
+<div style="display: grid; grid-template-columns: 84px 64px minmax(0, 1fr) 84px; column-gap: 10px; align-items: center; min-height: 44px; border-bottom: 1px solid #1A1A1A"><span style="color: #9A9A9A">2026-08-14</span><span style="text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; padding: 2px 0; border: 1px solid #2BD67B; color: #2BD67B">BUY</span><span><span style="font-weight: 600">BRDX</span> 5 @ 455.10</span><span style="text-align: right">2,275.50</span></div>
+<div style="display: grid; grid-template-columns: 84px 64px minmax(0, 1fr) 84px; column-gap: 10px; align-items: center; min-height: 44px; border-bottom: 1px solid #1A1A1A"><span style="color: #9A9A9A">2026-07-02</span><span style="text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; padding: 2px 0; border: 1px solid #FF4D4D; color: #FF4D4D">SELL</span><span><span style="font-weight: 600">QNTL</span> 40 @ 20.15</span><span style="text-align: right">806.00</span></div>
+<div style="display: grid; grid-template-columns: 84px 64px minmax(0, 1fr) 84px; column-gap: 10px; align-items: center; min-height: 44px; border-bottom: 1px solid #1A1A1A"><span style="color: #9A9A9A">2026-05-19</span><span style="text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; padding: 2px 0; border: 1px solid #2BD67B; color: #2BD67B">BUY</span><span><span style="font-weight: 600">LRKS</span> 30 @ 41.25</span><span style="text-align: right">1,237.50</span></div>
+<div style="display: grid; grid-template-columns: 84px 64px minmax(0, 1fr) 84px; column-gap: 10px; align-items: center; min-height: 44px"><span style="color: #9A9A9A">2026-04-03</span><span style="text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; padding: 2px 0; border: 1px solid #9A9A9A; color: #C8C8C8">CASH</span><span>Deposit</span><span style="text-align: right">2,000.00</span></div>
+</div>
+</section>
+
+<section id="filings" style="flex: 1 1 340px; min-width: 0; background: #0A0A0A; border: 1px solid #2A2A2A">
+<div style="display: flex; align-items: center; gap: 10px; min-height: 34px; padding: 0 10px; background: #141414; border-bottom: 1px solid #2A2A2A">
+<span aria-hidden="true" style="font-size: 12px; font-weight: 600; padding: 0 6px; background: {{accent}}; color: #000000">6</span>
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: {{accent}}">Filings from your holdings</h2>
+</div>
+<div style="padding: 0 14px">
+<a href="#" style="display: grid; grid-template-columns: 84px 48px 56px minmax(0, 1fr); column-gap: 10px; align-items: center; min-height: 44px; border-bottom: 1px solid #1A1A1A; text-decoration: none; color: #F2F2F2"><span style="color: #9A9A9A">2026-09-30</span><span style="font-weight: 600">OSLO</span><span style="font-weight: 600; color: {{accent}}">8-K</span><span style="font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Guidance update</span></a>
+<a href="#" style="display: grid; grid-template-columns: 84px 48px 56px minmax(0, 1fr); column-gap: 10px; align-items: center; min-height: 44px; border-bottom: 1px solid #1A1A1A; text-decoration: none; color: #F2F2F2"><span style="color: #9A9A9A">2026-08-12</span><span style="font-weight: 600">HVST</span><span style="font-weight: 600; color: {{accent}}">10-Q</span><span style="font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Quarter ended Jun 27, 2026</span></a>
+<a href="#" style="display: grid; grid-template-columns: 84px 48px 56px minmax(0, 1fr); column-gap: 10px; align-items: center; min-height: 44px; border-bottom: 1px solid #1A1A1A; text-decoration: none; color: #F2F2F2"><span style="color: #9A9A9A">2026-08-06</span><span style="font-weight: 600">LRKS</span><span style="font-weight: 600; color: {{accent}}">10-Q</span><span style="font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Quarter ended Jun 28, 2026</span></a>
+<a href="#" style="display: grid; grid-template-columns: 84px 48px 56px minmax(0, 1fr); column-gap: 10px; align-items: center; min-height: 44px; border-bottom: 1px solid #1A1A1A; text-decoration: none; color: #F2F2F2"><span style="color: #9A9A9A">2026-07-29</span><span style="font-weight: 600">MAPL</span><span style="font-weight: 600; color: {{accent}}">FORM 4</span><span style="font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Officer sold 4,500 shares</span></a>
+<a href="#" style="display: grid; grid-template-columns: 84px 48px 56px minmax(0, 1fr); column-gap: 10px; align-items: center; min-height: 44px; text-decoration: none; color: #F2F2F2"><span style="color: #9A9A9A">2026-07-17</span><span style="font-weight: 600">LRKS</span><span style="font-weight: 600; color: {{accent}}">FORM 4</span><span style="font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Director bought 12,000 shares</span></a>
+</div>
+</section>
+
+</div>
+
+<footer style="display: flex; flex-wrap: wrap; gap: 4px 24px; padding: 10px 0 6px; border-top: 1px solid #2A2A2A; font-size: 11px; color: #9A9A9A; text-transform: uppercase; letter-spacing: 0.06em">
+<span>Trades are stored on this computer only</span>
+<span>Quotes: Finnhub, 2 min ago</span>
+<span>History: Alpaca, IEX feed</span>
+<span>Returns exclude dividends</span>
+</footer>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FFA31A","options":["#FFA31A","#FFFFFF","#B8F26A"]},"$preview":{"width":1440,"height":1720}}'>
+class Component extends DCLogic {
+renderVals() {
+var accent = this.props.accent ?? '#FFA31A';
+var up = '#2BD67B';
+var down = '#FF4D4D';
+var ink = '#F2F2F2';
+var warn = '#FFE14D';
+var grey = '#6A6A6A';
+return {
+accent: accent,
+holdings: [
+{ t: 'BRDX', n: 'Broad Market Index Fund', sh: '25', cost: '402.00', px: '468.30', day: '+0.35%', dayC: up, val: '11,707.50', gain: '+1,657.50', gainP: '+16.5%', gC: up, w: '31.1%', wbar: '93%', cat: 'Index fund', score: '-', sC: '#9A9A9A', pe: '-', peg: '-', accent: grey },
+{ t: 'LRKS', n: 'Larkspur Hardware', sh: '120', cost: '31.40', px: '48.20', day: '+1.30%', dayC: up, val: '5,784.00', gain: '+2,016.00', gainP: '+53.5%', gC: up, w: '15.4%', wbar: '46%', cat: 'Fast grower', score: '95', sC: ink, pe: '20.0', peg: '0.91', accent: accent },
+{ t: 'OSLO', n: 'Oslofjord Robotics', sh: '150', cost: '30.25', px: '27.15', day: '+2.08%', dayC: up, val: '4,072.50', gain: '-465.00', gainP: '-10.2%', gC: down, w: '10.8%', wbar: '32%', cat: 'Fast grower', score: '58', sC: warn, pe: '34.2', peg: '1.32', accent: accent },
+{ t: 'QNTL', n: 'Quintal Freight', sh: '200', cost: '16.90', px: '19.36', day: '-1.75%', dayC: down, val: '3,872.00', gain: '+492.00', gainP: '+14.6%', gC: up, w: '10.3%', wbar: '31%', cat: 'Cyclical', score: '62', sC: ink, pe: '11.6', peg: '0.88', accent: accent },
+{ t: 'HVST', n: 'Harvest Table Foods', sh: '60', cost: '52.80', px: '63.90', day: '+0.11%', dayC: up, val: '3,834.00', gain: '+666.00', gainP: '+21.0%', gC: up, w: '10.2%', wbar: '31%', cat: 'Stalwart', score: '74', sC: ink, pe: '19.1', peg: '1.55', accent: accent },
+{ t: 'MAPL', n: 'Maple Ridge Bancorp', sh: '90', cost: '38.75', px: '41.02', day: '+0.56%', dayC: up, val: '3,691.80', gain: '+204.30', gainP: '+5.9%', gC: up, w: '9.8%', wbar: '29%', cat: 'Slow grower', score: '55', sC: warn, pe: '10.9', peg: '1.70', accent: accent },
+{ t: 'BRNT', n: 'Brant Marine Supply', sh: '30', cost: '96.10', px: '112.44', day: '-0.42%', dayC: down, val: '3,373.20', gain: '+490.20', gainP: '+17.0%', gC: up, w: '9.0%', wbar: '27%', cat: 'Stalwart', score: '71', sC: ink, pe: '17.8', peg: '1.42', accent: accent }
+]
+};
+}
+}
+</script>
+</body>
+</html>

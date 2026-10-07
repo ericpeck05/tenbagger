@@ -1,0 +1,30 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Local data, never committed
+data/
+*.db
+*.sqlite
+*.zip
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+dist/
+build/
+
+# OS and editors
+.DS_Store
+.vscode/
+.idea/
+*.egg-info/
+*.tsbuildinfo

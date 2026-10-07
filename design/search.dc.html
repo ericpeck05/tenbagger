@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ticker search</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#000000}
+button{font:inherit}
+a{color:#E0E0E0}a:hover{color:#FFFFFF}
+</style>
+</helmet>
+<div style="width: 720px; height: 500px; box-sizing: border-box; padding: 28px; background: #000000; color: #F2F2F2; font-family: 'IBM Plex Mono', monospace; font-size: 13px; line-height: 1.4">
+<div style="height: 100%; box-sizing: border-box; display: flex; flex-direction: column; background: #0A0A0A; border: 1px solid #3A3A3A; overflow: hidden">
+
+<div style="display: flex; align-items: center; gap: 12px; padding: 0 16px; background: #141414; border-bottom: 1px solid #2A2A2A">
+<span aria-hidden="true" style="font-size: 18px; font-weight: 600; color: {{accent}}">&gt;</span>
+<label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%)">Search any ticker or company</label>
+<input id="q" type="text" value="MA" style="flex: 1; min-width: 0; height: 56px; background: transparent; border: 0; outline: none; color: #F2F2F2; font: inherit; font-size: 18px; font-weight: 600; text-transform: uppercase">
+<span style="font-size: 12px; padding: 1px 6px; border: 1px solid #3A3A3A; color: #9A9A9A">ESC</span>
+</div>
+
+<div style="flex: 1; overflow: hidden">
+
+<div style="display: flex; justify-content: space-between; padding: 8px 16px 6px; font-size: 11px; color: #9A9A9A; text-transform: uppercase; letter-spacing: 0.08em">
+<span style="font-weight: 600; color: {{accent}}">On hand</span>
+<span>Opens instantly</span>
+</div>
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 16px; background: {{accent}}; text-decoration: none; color: #000000">
+<span style="width: 56px; font-weight: 600">MAPL</span>
+<span style="flex: 1; min-width: 0; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; font-weight: 500">Maple Ridge Bancorp, Banks</span>
+<span style="font-weight: 600">41.02</span>
+<span style="width: 64px; text-align: right; font-weight: 600">+0.56%</span>
+<span style="font-size: 12px; font-weight: 600; padding: 1px 6px; border: 1px solid #000000">ENTER</span>
+</a>
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 16px; border-bottom: 1px solid #1A1A1A; text-decoration: none; color: #F2F2F2">
+<span style="width: 56px; font-weight: 600">MARL</span>
+<span style="flex: 1; min-width: 0; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px">Marlow Paper Co., <span style="color: #9A9A9A">Packaging</span></span>
+<span>88.71</span>
+<span style="width: 64px; text-align: right; color: #FF4D4D">-0.38%</span>
+<span style="width: 54px"></span>
+</a>
+
+<div style="display: flex; justify-content: space-between; padding: 12px 16px 6px; font-size: 11px; color: #9A9A9A; text-transform: uppercase; letter-spacing: 0.08em">
+<span style="font-weight: 600; color: {{accent}}">Everything else</span>
+<span>Fundamentals ready, price on open</span>
+</div>
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 16px; border-bottom: 1px solid #1A1A1A; text-decoration: none; color: #F2F2F2">
+<span style="width: 56px; font-weight: 600">MAVN</span>
+<span style="flex: 1; min-width: 0; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px">Maven Tide Software, <span style="color: #9A9A9A">Software</span></span>
+<span style="font-size: 11px; color: #9A9A9A; text-transform: uppercase">Cached Sep 14</span>
+</a>
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 16px; border-bottom: 1px solid #1A1A1A; text-decoration: none; color: #F2F2F2">
+<span style="width: 56px; font-weight: 600">MAZE</span>
+<span style="flex: 1; min-width: 0; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px">Mazewood Brewing, <span style="color: #9A9A9A">Beverages</span></span>
+<span style="font-size: 11px; color: #9A9A9A; text-transform: uppercase">New, about 1 sec</span>
+</a>
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 16px; text-decoration: none; color: #F2F2F2">
+<span style="width: 56px; font-weight: 600">MATT</span>
+<span style="flex: 1; min-width: 0; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px">Mattock Industrial Tools, <span style="color: #9A9A9A">Machinery</span></span>
+<span style="font-size: 11px; color: #9A9A9A; text-transform: uppercase">New, about 1 sec</span>
+</a>
+
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 10px 16px; background: #141414; border-top: 1px solid #2A2A2A; font-size: 11px; color: #9A9A9A; text-transform: uppercase; letter-spacing: 0.06em">
+<span><span style="font-weight: 600; padding: 0 5px; background: {{accent}}; color: #000000">UP / DN</span> Move</span>
+<span><span style="font-weight: 600; padding: 0 5px; background: {{accent}}; color: #000000">ENTER</span> Open</span>
+<span><span style="font-weight: 600; padding: 0 5px; background: {{accent}}; color: #000000">W</span> Watch</span>
+<span style="margin-left: auto">Sample data</span>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FFA31A","options":["#FFA31A","#FFFFFF","#B8F26A"]},"$preview":{"width":720,"height":500}}'>
+class Component extends DCLogic {
+renderVals() {
+return { accent: this.props.accent ?? '#FFA31A' };
+}
+}
+</script>
+</body>
+</html>
