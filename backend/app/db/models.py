@@ -129,3 +129,50 @@ class Ratio(Base):
 # of ratio columns in one place.
 for _col in RATIO_COLUMNS:
     setattr(Ratio, _col, mapped_column(_col, Float, nullable=True))
+
+
+class PriceDaily(Base):
+    """Split-adjusted daily bars. Keyed by ticker so funds and ETFs can be priced too."""
+
+    __tablename__ = "prices_daily"
+
+    ticker: Mapped[str] = mapped_column(String(12), primary_key=True)
+    date: Mapped[date] = mapped_column(Date, primary_key=True)
+    open: Mapped[float] = mapped_column(Float)
+    high: Mapped[float] = mapped_column(Float)
+    low: Mapped[float] = mapped_column(Float)
+    close: Mapped[float] = mapped_column(Float)
+
+
+class Quote(Base):
+    __tablename__ = "quotes"
+
+    ticker: Mapped[str] = mapped_column(String(12), primary_key=True)
+    price: Mapped[float] = mapped_column(Float)
+    change: Mapped[float | None] = mapped_column(Float)
+    change_pct: Mapped[float | None] = mapped_column(Float)
+    prev_close: Mapped[float | None] = mapped_column(Float)
+    open: Mapped[float | None] = mapped_column(Float)
+    high: Mapped[float | None] = mapped_column(Float)
+    low: Mapped[float | None] = mapped_column(Float)
+    quote_time: Mapped[datetime | None] = mapped_column(DateTime)  # exchange time of the price
+    fetched_at: Mapped[datetime] = mapped_column(DateTime)
+
+
+class PriceFetch(Base):
+    """When each ticker's bars were last topped up, so a fetch is not repeated on every open."""
+
+    __tablename__ = "price_fetches"
+
+    ticker: Mapped[str] = mapped_column(String(12), primary_key=True)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime)
+    first_date: Mapped[date | None] = mapped_column(Date)
+    last_date: Mapped[date | None] = mapped_column(Date)
+
+
+class WatchItem(Base):
+    __tablename__ = "watchlist"
+
+    ticker: Mapped[str] = mapped_column(String(12), primary_key=True)
+    added_at: Mapped[datetime] = mapped_column(DateTime)
+    position: Mapped[int] = mapped_column(Integer, default=0)

@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     sec_user_agent: SecretStr = SecretStr("")
 
     data_dir: Path = REPO_ROOT / "data"
+    run_jobs: bool = True  # background quote loop and daily bars
 
     # Rate limits sit below each provider's published ceiling.
     edgar_per_second: float = Field(8, gt=0)

@@ -17,26 +17,37 @@ class ProviderError(Exception):
 
 
 class RateLimiter:
-    """Spaces calls evenly so a provider never sees more than `rate` calls per `per` seconds.
+    """A token bucket: at most `rate` calls per `per` seconds, with bursts up to `burst`.
 
-    Thread-safe. Callers block in `wait()` until their slot comes up.
+    Thread-safe. Background work passes a `reserve`, which keeps that many tokens free for
+    calls made while someone is waiting on a page. So a stock opened during the quote loop
+    never queues behind it, and the total still stays within the limit.
     """
 
-    def __init__(self, rate: float, per: float = 1.0):
-        if rate <= 0 or per <= 0:
-            raise ValueError("rate and per must be positive")
-        self.interval = per / rate
-        self._next = 0.0
+    def __init__(self, rate: float, per: float = 1.0, burst: int = 1):
+        if rate <= 0 or per <= 0 or burst < 1:
+            raise ValueError("rate, per, and burst must be positive")
+        self.fill_rate = rate / per  # tokens per second
+        self.capacity = float(burst)
+        self._tokens = float(burst)
+        self._stamp = time.monotonic()
         self._lock = threading.Lock()
 
-    def wait(self) -> None:
-        with self._lock:
-            now = time.monotonic()
-            slot = max(now, self._next)
-            self._next = slot + self.interval
-        delay = slot - now
-        if delay > 0:
-            time.sleep(delay)
+    def _refill(self, now: float) -> None:
+        self._tokens = min(self.capacity, self._tokens + (now - self._stamp) * self.fill_rate)
+        self._stamp = now
+
+    def wait(self, reserve: int = 0) -> None:
+        reserve = min(reserve, int(self.capacity) - 1)
+        while True:
+            with self._lock:
+                now = time.monotonic()
+                self._refill(now)
+                if self._tokens - reserve >= 1:
+                    self._tokens -= 1
+                    return
+                delay = (1 + reserve - self._tokens) / self.fill_rate
+            time.sleep(min(delay, 1.0))
 
 
 class HttpProvider:
@@ -61,9 +72,12 @@ class HttpProvider:
             transport=transport,
         )
 
-    def get(self, url: str, params: Mapping[str, str] | None = None) -> httpx.Response:
+    def get(
+        self, url: str, params: Mapping[str, str] | None = None, reserve: int = 0
+    ) -> httpx.Response:
+        """GET through the rate limiter. Background callers pass a `reserve` (see RateLimiter)."""
         for attempt in range(1, self.max_attempts + 1):
-            self.limiter.wait()
+            self.limiter.wait(reserve)
             try:
                 res = self.client.get(url, params=params)
             except httpx.TransportError as exc:
