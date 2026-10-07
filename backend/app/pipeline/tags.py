@@ -294,7 +294,40 @@ def latest_per_period(facts: Iterable[Fact]) -> dict[tuple, Fact]:
 
 
 # Ratios a stock split or reverse split can produce between an old and a restated value.
-_SPLIT_RATIOS = [2, 3, 4, 5, 6, 7, 8, 10, 12, 15, 20, 25, 30, 40, 50, 1.5, 2.5, 1.25]
+_SPLIT_RATIOS = [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    10,
+    12,
+    15,
+    20,
+    25,
+    30,
+    35,
+    40,
+    50,
+    60,
+    70,
+    75,
+    80,
+    100,
+    120,
+    150,
+    200,
+    250,
+    300,
+    400,
+    500,
+    1000,
+    1.5,
+    2.5,
+    1.25,
+]
 _SPLIT_FACTORS = sorted({r for r in _SPLIT_RATIOS} | {1 / r for r in _SPLIT_RATIOS})
 
 

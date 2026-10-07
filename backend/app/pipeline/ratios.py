@@ -99,8 +99,7 @@ def fundamentals(facts: Facts) -> Fundamentals:
             ends.append(t.end)
             if name == "revenue":
                 out.ttm_basis = t.basis
-    eps = T.ttm(facts.get("eps_diluted", {}))
-    out.eps = eps.value if eps else None
+    out.eps = _checked_eps(T.ttm(facts.get("eps_diluted", {})), out.net_income, facts)
 
     # Balance sheet items are read at the latest balance sheet date. An item last reported
     # on an older balance sheet (debt that was paid off, say) is missing, not stale.
@@ -123,6 +122,39 @@ def fundamentals(facts: Facts) -> Fundamentals:
     out.annual["inventory"] = _annual_instants(facts.get("inventory", {}), facts)
     out.annual["shares_outstanding"] = _annual_instants(facts.get("shares_outstanding", {}), facts)
     return out
+
+
+EPS_TOLERANCE = 2.0  # reported and derived trailing EPS may differ by this factor
+
+
+def _checked_eps(eps: T.Trailing | None, net_income: float | None, facts: Facts) -> float | None:
+    """Trailing EPS, cross-checked so a stock split inside the window cannot distort it.
+
+    Trailing EPS adds a fiscal year to year-to-date figures. When a split lands inside that
+    window, the 10-K's figure is on the old share basis and the newer 10-Q's on the new one,
+    and the sum is meaningless (a 1-for-250 reverse split can turn a loss into a huge
+    "profit"). The latest 10-Q's own net income and EPS for the same period give the share
+    basis it reports on, so trailing net income over that share count is a consistent
+    figure. If the two disagree in sign or by more than 2x, the derived one is used.
+    Share-count tags are not used for this: some filers tag them in millions.
+    """
+    if eps is None or eps.basis == "FY" or net_income is None:
+        return eps.value if eps else None
+    ytd_eps = _ytd(facts.get("eps_diluted", {}), eps.end)
+    ytd_ni = _ytd(facts.get("net_income", {}), eps.end)
+    if ytd_eps is None or ytd_ni is None or abs(ytd_eps) < 0.005 or ytd_ni == 0:
+        return eps.value
+    derived = net_income * ytd_eps / ytd_ni
+    ratio = eps.value / derived if derived else 0
+    if ratio <= 0 or not 1 / EPS_TOLERANCE <= ratio <= EPS_TOLERANCE:
+        return derived
+    return eps.value
+
+
+def _ytd(facts: dict[tuple, Fact], end: date) -> float | None:
+    """The longest year-to-date value ending on `end`."""
+    ytd = [f for f in facts.values() if f.end == end and T.ytd_months(f) is not None]
+    return max(ytd, key=lambda f: f.days).value if ytd else None
 
 
 def _shares(facts: Facts) -> float | None:
@@ -268,6 +300,11 @@ def filing_ratios(f: Fundamentals, financial: bool = False) -> dict[str, float |
     return out
 
 
+# A trailing P/E under 1 means a year's earnings exceed the share price. No real stock trades
+# there; it is a per-share figure tagged on the wrong basis in a filing, so P/E and PEG are
+# left blank rather than shown.
+MIN_PLAUSIBLE_PE = 1.0
+
 PRICE_RATIOS = (
     "market_cap",
     "pe",
@@ -294,6 +331,8 @@ def price_ratios(
         return dict.fromkeys(PRICE_RATIOS)
     mcap = None if shares is None else price * shares
     pe = _pos_div(price, r.get("eps_ttm"))
+    if pe is not None and pe < MIN_PLAUSIBLE_PE:
+        pe = None  # earnings above the whole share price: a tagging error in the filing
     g = r.get("eps_growth_5y")
     if g is None:
         g = r.get("eps_growth_3y")

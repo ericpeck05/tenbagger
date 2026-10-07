@@ -1508,6 +1508,75 @@ a.h-row[href]:hover {
   letter-spacing: 0.06em;
 }
 
+/* ------------------------------------------------------------ screener */
+.filters-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.input {
+  height: 36px;
+  padding: 0 8px;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 0;
+  color: var(--text);
+  font: inherit;
+  color-scheme: dark;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.input-num {
+  width: 100px;
+  text-align: right;
+}
+.unit {
+  min-width: 12px;
+}
+.filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.fine-inline {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.chip-group .chips {
+  gap: 4px;
+}
+.screen-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.screen-chip .chip {
+  min-height: 32px;
+  padding: 0 10px;
+}
+.screen-table {
+  padding: 6px 14px 8px;
+}
+.s-grid {
+  display: grid;
+  column-gap: 12px;
+  align-items: center;
+}
+.more {
+  padding: 10px 14px 14px;
+}
+
 /* ------------------------------------------------------------ other pages */
 .soon {
   max-width: 1440px;

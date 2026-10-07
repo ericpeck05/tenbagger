@@ -92,7 +92,7 @@ tenbagger/
 
 Rules for the fetcher:
 
-- One rate limiter per provider, with the limit read from config. Stay under the limit, not at it: 8 per second for EDGAR, 50 per minute for Finnhub, 150 per minute for Alpaca.
+- One rate limiter per provider, with the limit read from config. Stay under the limit, not at it: 8 per second for EDGAR, 50 per minute for Finnhub, 150 per minute for Alpaca. Every EDGAR client in a process shares one limiter. The limiter is per process, so running a command-line EDGAR job (`make bulk`, `python -m app.jobs.insiders`) while the app's own jobs are hitting EDGAR can double the rate; run them while the app is stopped, or let the app's scheduled jobs do the work.
 - Back off and retry on HTTP 429 and 5xx. Never fail a page because a provider is down. Serve the cached value with its age.
 - Every stored value carries the time it was fetched, so the UI can show how old it is.
 
@@ -257,6 +257,8 @@ Ratios that use price are recomputed whenever a new quote arrives. The rest chan
 - **Foreign filers** on forms 20-F and 40-F often use the `ifrs-full` taxonomy. Version 1 covers `us-gaap` filers only and labels the others as unsupported.
 - **Stock splits** change EPS and share counts across history. EPS history from the latest 10-K is already restated for the years it covers. Older years are restated by comparing each filing's values with the newer filing's values for the same periods: a ratio that matches a split (2, 3, 4, 10, 20, and so on, or a reverse split) rescales everything only that older filing covers. NVIDIA's fiscal 2021 EPS of $6.90 becomes $0.17 after its 4-for-1 and 10-for-1 splits. A split inside the current fiscal year, before the next 10-K, is not caught: trailing EPS can mix bases for those months.
 - **Fiscal years** do not all end in December. Sector medians compare each company's latest TTM, whatever month it ends.
+- **Splits inside the trailing window.** Trailing EPS adds a 10-K's fiscal year to 10-Q year-to-date figures; a split between them (common with micro-cap reverse splits) mixes share bases and can turn a loss into a huge "profit". Trailing EPS is cross-checked against trailing net income over the share basis implied by the latest 10-Q (its own net income over its own EPS, so share-count tags, which some filers report in millions, are not used). If the two differ in sign or by more than 2x, the derived figure is used.
+- **Implausible P/E.** A trailing P/E under 1 (a year's earnings above the share price) is a tagging error in a filing; P/E and PEG are left blank.
 
 **Sector medians and 5-year range**
 
@@ -356,6 +358,11 @@ The watchlist sits in a left column on the stock page, with warm names and their
 **Screener**
 
 Filters on any stored ratio, sector, market cap, and Lynch category, with sortable columns. Ships with one saved preset, "Lynch fast growers": PEG under 1.0, EPS growth above 15%, debt to equity under 0.5, market cap $300M to $10B.
+
+- One SQL query over `ratios` joined to `companies`: `GET /api/screener?f=peg:lt:1&f=market_cap:between:3e8,1e10&sector=Retail&category=Stalwart&sort=lynch_score&dir=desc&limit=100`. Values are in stored units (fractions for percentages). The page takes percentages in % and money as 300M or 10B.
+- Missing values never match a filter. Companies whose latest figures are more than 18 months old (they stopped filing, or moved to forms version 1 does not read) are left out.
+- Screens can be saved by name (`GET, POST, DELETE /api/screens`); the preset cannot be deleted. The current screen lives in the URL, so it can be bookmarked and the back button works.
+- Price-based ratios use the live quote for warm stocks and the nightly close for cold ones.
 
 **Speed rules**
 

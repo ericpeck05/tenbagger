@@ -314,3 +314,15 @@ class Form4Parsed(Base):
     cik: Mapped[int] = mapped_column(Integer, primary_key=True)
     accession: Mapped[str] = mapped_column(String(25), primary_key=True)
     parsed_at: Mapped[datetime] = mapped_column(DateTime)
+
+
+class Screen(Base):
+    """A saved screener query. The Lynch fast growers preset ships built in."""
+
+    __tablename__ = "screens"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(80))
+    query: Mapped[str] = mapped_column(Text)  # JSON: filters, sectors, categories, sort
+    builtin: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime)

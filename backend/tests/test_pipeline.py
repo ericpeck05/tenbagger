@@ -411,3 +411,56 @@ def test_sector_for_sic(sic, sector):
 
 def test_is_financial():
     assert is_financial(6022) and is_financial(6311) and not is_financial(6798)
+
+
+def test_trailing_eps_falls_back_when_a_split_mixes_share_bases():
+    from app.pipeline.ratios import fundamentals
+
+    # FY2025 EPS on the old basis (-1.0, net income -1,000 over 1,000 shares). A 1-for-100
+    # reverse split, then the Q1 10-Q reports both Q1s on the new basis (10 shares).
+    # Reported TTM = -1 + (-25) - (-25) = -1, on the wrong basis. Net income TTM is -1,000;
+    # the 10-Q's own figures give -25 EPS on -250 net income, so 10 shares: -100 a share.
+    def f(metric, start, end, value):
+        return fact(start, end, value, metric=metric)
+
+    facts = {
+        "eps_diluted": periods(
+            f("eps_diluted", "2025-01-01", "2025-12-31", -1.0),
+            f("eps_diluted", "2026-01-01", "2026-03-31", -25.0),
+            f("eps_diluted", "2025-01-01", "2025-03-31", -25.0),
+        ),
+        "net_income": periods(
+            f("net_income", "2025-01-01", "2025-12-31", -1_000.0),
+            f("net_income", "2026-01-01", "2026-03-31", -250.0),
+            f("net_income", "2025-01-01", "2025-03-31", -250.0),
+        ),
+    }
+    assert fundamentals(facts).eps == pytest.approx(-100.0)
+
+
+def test_trailing_eps_kept_when_it_agrees():
+    from app.pipeline.ratios import fundamentals
+
+    def f(metric, start, end, value):
+        return fact(start, end, value, metric=metric)
+
+    facts = {
+        "eps_diluted": periods(
+            f("eps_diluted", "2025-01-01", "2025-12-31", 8.0),
+            f("eps_diluted", "2026-01-01", "2026-03-31", 2.1),
+            f("eps_diluted", "2025-01-01", "2025-03-31", 2.0),
+        ),
+        "net_income": periods(
+            f("net_income", "2025-01-01", "2025-12-31", 800.0),
+            f("net_income", "2026-01-01", "2026-03-31", 210.0),
+            f("net_income", "2025-01-01", "2025-03-31", 200.0),
+        ),
+    }
+    assert fundamentals(facts).eps == pytest.approx(8.1)
+
+
+def test_implausible_pe_is_left_blank():
+    r = filing_ratios(base())
+    r["eps_ttm"] = 50.0  # above the 20 price
+    p = price_ratios(20.0, r, 100.0, 700.0, 300.0, 100.0)
+    assert p["pe"] is None and p["peg"] is None
