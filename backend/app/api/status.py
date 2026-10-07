@@ -33,6 +33,7 @@ def status() -> dict:
         ).one()
     return {
         "version": __version__,
+        "demo": settings.demo,
         "now": datetime.now(UTC).isoformat(),
         "database": {"ok": db_ok, **counts},
         "keys": settings.keys_present(),
