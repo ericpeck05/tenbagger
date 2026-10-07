@@ -3,9 +3,9 @@ from datetime import UTC, datetime
 from fastapi import APIRouter
 from sqlalchemy import func, select, text
 
-from app import __version__
+from app import __version__, market
 from app.config import get_settings
-from app.db.models import Base, Company, FactRow, Ratio
+from app.db.models import Base, Company, FactRow, PriceDaily, Quote, Ratio
 from app.db.session import get_engine
 
 router = APIRouter()
@@ -25,11 +25,25 @@ def status() -> dict:
             "ratios": conn.execute(select(func.count()).select_from(Ratio)).scalar(),
         }
         last_load = conn.execute(select(func.max(Company.facts_fetched_at))).scalar()
+        counts["quotes"] = conn.execute(select(func.count()).select_from(Quote)).scalar()
+        counts["price_bars"] = conn.execute(select(func.count()).select_from(PriceDaily)).scalar()
+        newest_quote, oldest_quote = conn.execute(
+            select(func.max(Quote.fetched_at), func.min(Quote.fetched_at))
+        ).one()
     return {
         "version": __version__,
         "now": datetime.now(UTC).isoformat(),
         "database": {"ok": db_ok, **counts},
         "keys": settings.keys_present(),
-        "jobs": {"fundamentals_loaded_at": last_load.isoformat() if last_load else None},
+        "market": {"open": market.is_open()},
+        "jobs": {
+            "fundamentals_loaded_at": _iso(last_load),
+            "newest_quote_at": _iso(newest_quote),
+            "oldest_quote_at": _iso(oldest_quote),
+        },
         "tiers": tiers,
     }
+
+
+def _iso(dt: datetime | None) -> str | None:
+    return dt.isoformat() + "Z" if dt else None
