@@ -24,6 +24,7 @@ class Settings(BaseSettings):
 
     data_dir: Path = REPO_ROOT / "data"
     run_jobs: bool = True  # background quote loop and daily bars
+    demo: bool = False  # made-up prices and portfolio, see app/demo/build.py
 
     # Rate limits sit below each provider's published ceiling.
     edgar_per_second: float = Field(8, gt=0)

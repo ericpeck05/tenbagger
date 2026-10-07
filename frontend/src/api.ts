@@ -104,6 +104,7 @@ export type Watchlist = {
 
 export type Status = {
   version: string;
+  demo: boolean;
   now: string;
   database: { ok: boolean; companies: number; quotes: number; price_bars: number };
   keys: Record<string, boolean>;

@@ -318,7 +318,7 @@ The app has four screens: stock page, search, portfolio, and screener. The stock
 
 **Look**
 
-The look takes cues from professional trading terminals without copying one: true black, an amber accent, square corners, dense rows, and every panel topped by a title bar with an uppercase monospace label. Each panel has a number, and pressing that number key jumps to it. The search box is a command line with a prompt. Selected items use inverse colors, amber fill with black text. No blue anywhere. Gains and losses always carry a plus or minus sign as well as a color. The layout must work at phone width: the watchlist stacks above the content and the cards go single column.
+The look takes cues from professional trading terminals without copying one: true black, an amber accent, square corners, dense rows, and every panel topped by a title bar with an uppercase monospace label. Each panel has a number, and pressing that number key jumps to it. The search box is a command line with a prompt. Selected items use inverse colors, amber fill with black text. No blue anywhere. Gains and losses always carry a plus or minus sign as well as a color. The app is used in a desktop browser; it does not need a phone layout (decided 2026-10-07). Panels wrap on narrow windows, but phone widths are not designed for.
 
 | Token | Value |
 | --- | --- |
@@ -447,6 +447,10 @@ The code lives in a public repo at `github.com/ericpeck05/tenbagger`, set up so 
 
 - **README:** one-paragraph pitch, a screenshot of the stock page, a short screen recording of search, a three-step quick start, the architecture diagram, the data sources with their limits, and a note that this is a research tool and not investment advice.
 - **Demo mode:** `make demo` runs the app on bundled sample data with no keys, so anyone who clones it sees a working page in a minute.
+  - Ten companies with real EDGAR fundamentals: the test fixtures plus trimmed EDGAR submissions JSON in `backend/app/demo/submissions/` (EDGAR data only, as the repo rules require).
+  - Made-up prices: a seeded random walk per ticker since 2016, trending up 30% to 200% over the decade, ending at a P/E between 14 and 34. A made-up portfolio and watchlist.
+  - The demo database is built on first run in `data/demo/` (`make demo-reset` rebuilds it). It uses its own ports (UI 5174, API 8100) and forces every key empty, so it never calls a provider, even on a machine with a `.env`. The top bar says "Demo mode, prices are made up" and pages carry a "Sample data" chip.
+  - README screenshots come from demo mode, since Finnhub and Alpaca data cannot be published.
 - **License:** MIT.
 - **CI:** a GitHub Actions workflow runs `ruff`, `pytest`, and the frontend type check on every push.
 - **History:** one pull request per build phase, each with a short description of what it adds, and a version tag when the phase is done.
@@ -464,7 +468,7 @@ Eight phases, each ending in something that runs. Finish and merge one before st
 | 4. Whole market | Bulk load, warm and cold tiers, on-request path, nightly jobs, promotion | A small-cap that was never opened loads in about a second, then instantly the second time |
 | 5. Lynch check | Categories, nine tests, score, Form 4 insider trades, sector medians, 5-year ranges, and the Lynch columns and look-through on the portfolio page | Every ratio row shows its range bar and sector median, and each score can be traced to its nine inputs |
 | 6. Screener | Filter and sort across all companies, the saved Lynch preset | A screen across the full market returns in under a second |
-| 7. Polish | Phone layout, hover prefetch, demo mode, README with screenshots, `v1.0` tag | A fresh clone runs with `make demo` and no keys |
+| 7. Polish | Hover prefetch, demo mode, README with screenshots, `v1.0` tag (the phone layout was dropped) | A fresh clone runs with `make demo` and no keys |
 
 Phase 1 deliberately uses the per-company API for about 500 names, which takes a couple of minutes at 8 requests per second. That proves the pipeline on familiar companies before the large bulk file comes in at phase 4.
 

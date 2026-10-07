@@ -8,6 +8,7 @@ import { type ChartKind, PriceChart } from "../components/PriceChart";
 import { RatioCards } from "../components/RatioCards";
 import { WatchlistColumn } from "../components/Watchlist";
 import { ago, big, DASH, longDate, num, signed, signedPctPoints, tone } from "../format";
+import { useDemo } from "../hooks/useDemo";
 import { useHotkeys } from "../hooks/useHotkeys";
 import { jumpTo, PANELS } from "../panels";
 
@@ -164,6 +165,7 @@ type BodyProps = {
 };
 
 function StockBody({ s, loadingNext, prices, range, setRange, kind, setKind, onWatch }: BodyProps) {
+  const demo = useDemo();
   const r = s.ratios ?? {};
   const q = s.quote;
   const [hover, setHover] = useState<Bar | null>(null);
@@ -192,6 +194,7 @@ function StockBody({ s, loadingNext, prices, range, setRange, kind, setKind, onW
               </span>
             )}
             {s.lynch?.category && <span className="chip chip-on-static">{s.lynch.category}</span>}
+            {demo && <span className="chip chip-pending">Sample data</span>}
             <button
               type="button"
               className={s.watching ? "chip chip-btn chip-on" : "chip chip-btn"}
@@ -369,7 +372,7 @@ function StockBody({ s, loadingNext, prices, range, setRange, kind, setKind, onW
             ? `, through ${s.sources.fundamentals.form} filed ${s.sources.fundamentals.through}`
             : ""}
         </span>
-        <span>Quote: Finnhub, {ago(s.sources.quote.fetched_at)}</span>
+        <span>{demo ? "Quote and chart: made up for the demo" : `Quote: Finnhub, ${ago(s.sources.quote.fetched_at)}`}</span>
         <span>
           Chart: Alpaca, SIP feed
           {s.sources.prices.last_date ? `, closes through ${s.sources.prices.last_date}` : ""}
