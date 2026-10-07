@@ -24,3 +24,8 @@ export const PORTFOLIO_PANELS: readonly PanelLink[] = [
   { n: 5, id: "activity", label: "Activity" },
   { n: 6, id: "filings", label: "Filings" },
 ];
+
+export const SCREENER_PANELS: readonly PanelLink[] = [
+  { n: 1, id: "filters", label: "Filters" },
+  { n: 2, id: "results", label: "Results" },
+];

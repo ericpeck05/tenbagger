@@ -6,7 +6,8 @@ import { TopBar } from "./components/TopBar";
 import { useHotkeys } from "./hooks/useHotkeys";
 import { StockPage } from "./pages/StockPage";
 import { PortfolioPage } from "./pages/PortfolioPage";
-import { jumpTo, type PanelLink, PANELS, PORTFOLIO_PANELS } from "./panels";
+import { ScreenerPage } from "./pages/ScreenerPage";
+import { jumpTo, type PanelLink, PANELS, PORTFOLIO_PANELS, SCREENER_PANELS } from "./panels";
 import { navigate, stockPath, useRoute } from "./router";
 
 function lastTicker(): string {
@@ -49,27 +50,13 @@ export function App() {
       {route.page === "stock" && route.ticker && <StockPage ticker={route.ticker} />}
       {route.page === "portfolio" && <PortfolioPage />}
       {route.page === "screener" && (
-        <ComingSoon title="Screener" phase={6} what="filters and sorting across every company" />
+        <>
+          <JumpBar panels={SCREENER_PANELS} hint="Press a number to jump, / to search" />
+          <ScreenerPage />
+        </>
       )}
       {searching && <SearchOverlay onClose={() => setSearching(false)} />}
     </div>
-  );
-}
-
-function ComingSoon({ title, phase, what }: { title: string; phase: number; what: string }) {
-  return (
-    <main className="soon">
-      <section className="panel">
-        <div className="panel-bar">
-          <div className="panel-bar-left">
-            <h2 className="panel-title">{title}</h2>
-          </div>
-        </div>
-        <div className="panel-body">
-          The {title.toLowerCase()} ({what}) arrives in phase {phase}.
-        </div>
-      </section>
-    </main>
   );
 }
 

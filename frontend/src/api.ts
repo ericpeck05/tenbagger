@@ -199,6 +199,27 @@ export type Performance = {
   benchmark?: string;
 };
 
+export type FieldKind = "score" | "money" | "price" | "ratio" | "pct" | "times";
+export type ScreenField = { key: string; label: string; kind: FieldKind };
+export type ScreenOp = "gt" | "lt" | "between";
+export type ScreenQuery = {
+  filters: [string, ScreenOp | "gte" | "lte", number | number[]][];
+  sectors?: string[];
+  categories?: string[];
+  sort?: string;
+  dir?: "asc" | "desc";
+};
+export type SavedScreen = { id: number; name: string; query: ScreenQuery; builtin: boolean };
+export type ScreenRow = {
+  ticker: string;
+  name: string;
+  sector: string | null;
+  tier: string;
+  category: string | null;
+  day_change_pct: number | null;
+} & Record<string, number | string | null>;
+export type ScreenResult = { total: number; rows: ScreenRow[]; columns: string[] };
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -248,6 +269,13 @@ export const api = {
     request<{ ticker: string; name: string | null; quote: Quote | null }>(
       `/api/quote/${encodeURIComponent(ticker)}`,
     ),
+  screenerFields: () =>
+    request<{ fields: ScreenField[]; sectors: string[]; categories: string[] }>("/api/screener/fields"),
+  screener: (params: string) => request<ScreenResult>(`/api/screener?${params}`),
+  screens: () => request<SavedScreen[]>("/api/screens"),
+  saveScreen: (name: string, query: ScreenQuery) =>
+    request<SavedScreen>("/api/screens", { method: "POST", body: JSON.stringify({ name, query }) }),
+  deleteScreen: (id: number) => request<{ deleted: number }>(`/api/screens/${id}`, { method: "DELETE" }),
   unwatch: (ticker: string) =>
     request<Watchlist>(`/api/watchlist/${encodeURIComponent(ticker)}`, { method: "DELETE" }),
 };
