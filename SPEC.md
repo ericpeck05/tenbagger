@@ -260,8 +260,9 @@ Ratios that use price are recomputed whenever a new quote arrives. The rest chan
 
 **Sector medians and 5-year range**
 
-- Sector median: the median of each ratio across companies in the same sector group with a market cap above $300M. Recomputed nightly.
-- 5-year range: the low and high of the ratio across the last five fiscal year ends in `ratio_history`. Price-based ratios in history use the closing price on each fiscal year end date.
+- Sector median: the median of each ratio across companies in the same sector group with a market cap above $300M. Recomputed nightly. So that every company has a market cap, a nightly job (5 p.m. on weekdays) fetches the latest close for all of them from Alpaca, about 30 multi-symbol requests, and updates their price-based ratios and Lynch score. Cold companies still keep no price history until opened.
+- 5-year range: the low and high of the ratio across the last five fiscal year ends in `ratio_history`. Price-based ratios in history use the closing price on each fiscal year end date; `ratio_history` keeps their inputs and they are computed when read, so a cold stock gets them once its price history is fetched. Each year's ratios use only facts for periods ending by that year end. On the page, today's value or the sector median outside the 5-year range is drawn at the end of the bar, and the tooltip gives each year's value.
+- `python -m app.jobs.rescore` recomputes every company's ratios, history, and Lynch check from the stored facts, with no downloads. Use it after changing a formula or a threshold.
 
 **Tests**
 
@@ -298,9 +299,16 @@ Every stock gets one of Lynch's six categories and a score out of 100 built from
 
 A pass earns the full weight, a watch earns half, a fail earns nothing. A test with missing data is left out and the remaining weights are rescaled to 100. The page shows each test's value and status, so the score is never a black box.
 
-Insider activity comes from Form 4 filings. Transaction code `P` is an open-market purchase and `S` is a sale. Ignore option exercises and grants.
+Insider activity comes from Form 4 filings. Transaction code `P` is an open-market purchase and `S` is a sale. Ignore option exercises and grants. Each Form 4 in the six-month window is read once, as raw XML, and a filing counts once as a buy or a sale however many lots it lists. Counts are only set when every Form 4 in the window has been read; until then the test is left out. The warm tier is read nightly (11:15 p.m.); a cold company's Form 4s are read in the background when it is opened. Reading a Form 4 also gives it a title on the filings list, such as "Director sold 1,366,000 shares".
 
 Banks skip the inventory test. Companies with no inventory skip it too.
+
+Every score shows its working: each test's value, status, weight, and thresholds, and a line such as "45 of 90 points, 1 test without data left out, scaled to 100".
+
+**Open questions on the category rules** (thresholds are in `pipeline/lynch_config.py`):
+- Cyclical catches 44% of the S&P 500. "EPS fell more than 30% in two or more of the last ten years" is met by most companies that had a bad 2020 and one other dip.
+- A company with EPS growth above 20% but revenue growth under 15% (Amazon in 2026) misses Fast grower and is above the Stalwart band, so it falls through to Slow grower.
+- Across the whole market, many loss-making small caps are Turnarounds (a recent loss that is shrinking) or fit no category.
 
 ## Interface
 
