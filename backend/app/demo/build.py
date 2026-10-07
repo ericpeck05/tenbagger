@@ -23,6 +23,7 @@ from app.config import get_settings
 from app.db.models import PriceDaily, PriceFetch, Ratio, Ticker, Transaction, WatchItem
 from app.db.session import get_engine, migrate, session_scope
 from app.jobs.bulk_load import tidy_name
+from app.jobs.load_sp500 import read_sp500
 from app.pipeline import holdings, pricing
 from app.pipeline.company import process_company
 from app.pipeline.sector_medians import recompute
@@ -46,13 +47,20 @@ def trading_days(end: date) -> list[date]:
 
 
 def random_walk(ticker: str, days: list[date], last_close: float) -> list[PriceDaily]:
-    """Daily bars from a seeded geometric random walk that ends at `last_close`."""
+    """Daily bars from a seeded random walk that ends at `last_close`.
+
+    The noise is pinned to a steady trend (a total gain of 30% to 200% since 2016), so every
+    made-up chart rises over the decade with ordinary ups and downs along the way.
+    """
     rng = random.Random(ticker)
-    drift, vol = rng.uniform(0.04, 0.18) / 252, rng.uniform(0.18, 0.40) / math.sqrt(252)
-    log_price, path = 0.0, []
+    vol = rng.uniform(0.16, 0.30) / math.sqrt(252)
+    noise, path = 0.0, []
     for _ in days:
-        log_price += drift + vol * rng.gauss(0, 1)
-        path.append(log_price)
+        noise += vol * rng.gauss(0, 1)
+        path.append(noise)
+    total = math.log(1 + rng.uniform(0.3, 2.0))
+    n = len(path) - 1
+    path = [p - path[-1] * i / n + total * i / n for i, p in enumerate(path)]
     scale = math.log(last_close) - path[-1]
     bars, prev = [], math.exp(path[0] + scale)
     for d, lp in zip(days, path, strict=True):
@@ -84,6 +92,7 @@ def build() -> Path:
 
     with session_scope() as session:
         tickers = []
+        names = {cik: e["name"] for cik, e in read_sp500().items()}
         for path in sorted(SUBMISSIONS.glob("*.json.gz")):
             ticker = path.name.removesuffix(".json.gz")
             sub = json.loads(gzip.decompress(path.read_bytes()))
@@ -94,7 +103,7 @@ def build() -> Path:
                 sub,
                 facts,
                 tickers=[ticker],
-                name=tidy_name(sub["name"]),
+                name=names.get(int(sub["cik"])) or tidy_name(sub["name"]),
                 in_sp500=True,
             )
             tickers.append(ticker)
