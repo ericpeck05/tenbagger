@@ -22,6 +22,7 @@ from app import market
 from app.config import get_settings
 from app.db.models import PriceDaily, PriceFetch, Ratio, Ticker, Transaction, WatchItem
 from app.db.session import get_engine, migrate, session_scope
+from app.jobs.bulk_load import tidy_name
 from app.pipeline import holdings, pricing
 from app.pipeline.company import process_company
 from app.pipeline.sector_medians import recompute
@@ -93,7 +94,7 @@ def build() -> Path:
                 sub,
                 facts,
                 tickers=[ticker],
-                name=sub["name"],
+                name=tidy_name(sub["name"]),
                 in_sp500=True,
             )
             tickers.append(ticker)
@@ -124,18 +125,17 @@ def _store_prices(session, ticker: str, days: list[date], last_close: float) -> 
             ticker=ticker, fetched_at=pricing.utcnow(), first_date=days[0], last_date=days[-1]
         )
     )
-    last = bars[-1]
-    rng = random.Random(f"{ticker}-today")
-    price = round(last.close * (1 + rng.gauss(0, 0.012)), 2)
+    # The quote is the last made-up close, so the header and the chart agree.
+    last, prev = bars[-1], bars[-2]
     quote = QuoteData(
         ticker=ticker,
-        price=price,
-        change=round(price - last.close, 2),
-        change_pct=round((price / last.close - 1) * 100, 2),
-        prev_close=last.close,
-        open=round(last.close * (1 + rng.gauss(0, 0.004)), 2),
-        high=round(max(price, last.close) * 1.006, 2),
-        low=round(min(price, last.close) * 0.994, 2),
+        price=last.close,
+        change=round(last.close - prev.close, 2),
+        change_pct=round((last.close / prev.close - 1) * 100, 2),
+        prev_close=prev.close,
+        open=last.open,
+        high=last.high,
+        low=last.low,
         quote_time=datetime.combine(days[-1], datetime.min.time()),
     )
     pricing.store_quote(session, quote)
