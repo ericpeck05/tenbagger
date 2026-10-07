@@ -22,7 +22,7 @@ from pathlib import Path
 from app.config import get_settings
 from app.db.models import Base
 from app.db.session import get_engine, get_session
-from app.pipeline.company import store_facts_and_ratios, store_filings, upsert_company
+from app.pipeline.company import process_company
 from app.pipeline.tags import merge_companyfacts
 from app.providers.edgar import Edgar
 
@@ -116,16 +116,15 @@ def main(argv: list[str] | None = None) -> int:
                 failures.append(f"{label}: not found on EDGAR")
                 continue
             try:
-                company = upsert_company(
+                process_company(
                     session,
                     cik,
                     submissions,
+                    companyfacts,
                     tickers=entry["tickers"],
                     name=entry["name"],
                     in_sp500=True,
                 )
-                store_filings(session, cik, submissions)
-                store_facts_and_ratios(session, company, companyfacts)
                 session.commit()
             except Exception as exc:
                 session.rollback()

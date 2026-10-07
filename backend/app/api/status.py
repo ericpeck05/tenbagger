@@ -5,7 +5,7 @@ from sqlalchemy import func, select, text
 
 from app import __version__, market
 from app.config import get_settings
-from app.db.models import Base, Company, FactRow, PriceDaily, Quote, Ratio
+from app.db.models import Base, Company, FactRow, JobRun, PriceDaily, Quote, Ratio
 from app.db.session import get_engine
 
 router = APIRouter()
@@ -27,6 +27,7 @@ def status() -> dict:
         last_load = conn.execute(select(func.max(Company.facts_fetched_at))).scalar()
         counts["quotes"] = conn.execute(select(func.count()).select_from(Quote)).scalar()
         counts["price_bars"] = conn.execute(select(func.count()).select_from(PriceDaily)).scalar()
+        runs = conn.execute(select(JobRun)).all()
         newest_quote, oldest_quote = conn.execute(
             select(func.max(Quote.fetched_at), func.min(Quote.fetched_at))
         ).one()
@@ -40,6 +41,15 @@ def status() -> dict:
             "fundamentals_loaded_at": _iso(last_load),
             "newest_quote_at": _iso(newest_quote),
             "oldest_quote_at": _iso(oldest_quote),
+            "runs": {
+                r.name: {
+                    "started_at": _iso(r.started_at),
+                    "finished_at": _iso(r.finished_at),
+                    "ok": r.ok,
+                    "detail": r.detail,
+                }
+                for r in runs
+            },
         },
         "tiers": tiers,
     }

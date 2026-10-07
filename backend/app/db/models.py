@@ -204,3 +204,26 @@ class PortfolioDaily(Base):
     cash: Mapped[float] = mapped_column(Float)
     net_deposits: Mapped[float] = mapped_column(Float)  # cumulative money put in
     return_index: Mapped[float] = mapped_column(Float)  # time-weighted, starts at 1.0
+
+
+class CompanyView(Base):
+    """One row each time a stock page is opened, for the 3-opens-in-30-days promotion rule."""
+
+    __tablename__ = "company_views"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    cik: Mapped[int] = mapped_column(Integer, index=True)
+    viewed_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+
+
+class JobRun(Base):
+    """The last run of each background job, for /api/status and for resuming where it left off."""
+
+    __tablename__ = "job_runs"
+
+    name: Mapped[str] = mapped_column(String(40), primary_key=True)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime)
+    ok: Mapped[bool | None] = mapped_column()
+    detail: Mapped[str | None] = mapped_column(Text)
+    cursor: Mapped[str | None] = mapped_column(Text)  # job-specific state, such as a date

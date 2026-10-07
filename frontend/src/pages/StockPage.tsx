@@ -173,6 +173,16 @@ function StockBody({ s, loadingNext, prices, range, setRange, kind, setKind, onW
             <span className="company">{s.name}</span>
             {s.exchange && <span className="chip">{s.exchange}</span>}
             {s.sector && <span className="chip">{s.sector}</span>}
+            {!s.supported && (
+              <span className="chip chip-pending" title="Version 1 covers us-gaap filers only">
+                Foreign filer, no fundamentals
+              </span>
+            )}
+            {s.supported && !s.ratios && (
+              <span className="chip chip-pending" title="EDGAR has no XBRL financial data for this company">
+                No reported financials
+              </span>
+            )}
             <span className="chip chip-pending" title="Lynch categories arrive in phase 5">
               Lynch, phase 5
             </span>

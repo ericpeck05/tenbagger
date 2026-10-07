@@ -195,3 +195,26 @@ def store_facts_and_ratios(session: Session, company: Company, companyfacts: dic
     session.add(row)
     company.facts_fetched_at = _now()
     return ratios
+
+
+def process_company(
+    session: Session,
+    cik: int,
+    submissions: dict,
+    companyfacts: dict | None,
+    *,
+    tickers: list[str],
+    name: str | None = None,
+    in_sp500: bool = False,
+) -> Company:
+    """Load one company from its EDGAR JSON: company row, tickers, filings, facts, ratios.
+
+    `companyfacts` is None for filers with no XBRL facts; they keep their filings only.
+    """
+    company = upsert_company(
+        session, cik, submissions, tickers=tickers, name=name, in_sp500=in_sp500
+    )
+    store_filings(session, cik, submissions)
+    if companyfacts is not None:
+        store_facts_and_ratios(session, company, companyfacts)
+    return company
