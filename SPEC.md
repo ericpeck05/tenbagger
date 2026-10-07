@@ -374,7 +374,10 @@ The portfolio page tracks real holdings, built from a log of trades, and sits be
 
 - The portfolio is a log of transactions entered by hand: buy, sell, deposit, withdrawal, dividend. Shares, average cost, and cash are always derived from that log, never typed in directly.
 - Cost basis uses the average cost method. A sell reduces shares at average cost and records the realized gain.
-- Every holding joins the warm tier automatically, so its quote stays fresh.
+- A buy that costs more than the cash on hand counts the shortfall as money brought in (an implicit deposit), so someone who logs only trades still gets correct returns. Selling more shares than are held, or withdrawing more than the cash, is refused with the reason, and so is any edit or delete that would make a later entry impossible.
+- Same-day entries apply in this order: deposits, dividends, sells, buys, withdrawals, so a deposit funds a buy on the same day.
+- A ticker in a trade must be a known company or have a Finnhub quote (index funds and ETFs). Funds show "Fund" as their category and are not linked to a stock page.
+- Every holding joins the warm tier automatically, so its quote stays fresh. Funds have no company row, so the quote loop and nightly bars include every held ticker directly.
 - Clicking a holding opens its stock page.
 
 **Page, top to bottom**
@@ -390,14 +393,15 @@ The portfolio page tracks real holdings, built from a log of trades, and sits be
 **Calculations**
 
 - Position value is shares times the latest quote. Daily history uses closes from `prices_daily`.
-- `portfolio_daily` is rebuilt from the first trade date whenever a trade is added, edited, or deleted.
+- `portfolio_daily` is rebuilt from the first trade date whenever a trade is added, edited, or deleted, and after the nightly bars job. Trading days come from SPY's bars. A holding with no close yet is valued at its trade price.
 - Returns are time-weighted, so a deposit never counts as a gain. With `V` as the day's closing value and `F` as net deposits that day, the daily return is:
 
 ```
 r_t = (V_t - F_t) / V_(t-1) - 1
 ```
 
-- The benchmark is SPY daily closes from Alpaca over the same dates.
+- The benchmark is SPY daily closes from Alpaca over the same dates. Both lines start at 0% at the beginning of the chosen range. "1Y vs benchmark" in the header is the difference in percentage points over the last year, or since the first trade if that is shorter.
+- "Total gain" in the header is unrealized: holdings value minus cost basis. Realized gains and dividends are in the API but not on the page yet.
 - Look-through P/E is total stock value divided by the holdings' share of earnings, not an average of P/Es. EPS growth and Lynch score are weighted by value. PEG is that P/E over that growth.
 
 **Limits on free data**
