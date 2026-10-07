@@ -1,4 +1,4 @@
-.PHONY: setup dev test lint format load coverage demo
+.PHONY: setup dev test lint format load bulk filings coverage demo
 
 PY := backend/.venv/bin/python
 URL := http://localhost:5173
@@ -40,6 +40,14 @@ format: setup
 # Load S&P 500 fundamentals from EDGAR (about two minutes), then report tag coverage.
 load: setup
 	cd backend && .venv/bin/python -m app.jobs.load_sp500
+
+# Load every listed US company from EDGAR's nightly bulk files (3 GB download, about 15 minutes).
+bulk: setup
+	cd backend && .venv/bin/python -m app.jobs.bulk_load
+
+# Pick up filings since the last run (the app also does this twice a day).
+filings: setup
+	cd backend && .venv/bin/python -m app.jobs.refresh_filings
 
 coverage: setup
 	cd backend && .venv/bin/python -m app.jobs.coverage

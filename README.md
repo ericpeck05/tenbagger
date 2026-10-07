@@ -17,6 +17,8 @@ Needs Python 3.12+, Node 20+, and `gitleaks` (`brew install gitleaks`).
 Other commands:
 
 - `make load` loads S&P 500 fundamentals from SEC EDGAR into `data/tenbagger.db` (about two minutes the first time)
+- `make bulk` loads every listed US company from EDGAR's bulk files (a 3 GB download and about 15 minutes)
+- `make filings` picks up new filings since the last run; the app also does this twice a day
 - `make coverage` reports, per metric, how many S&P 500 companies resolve a value
 - `make test`, `make lint`
 
