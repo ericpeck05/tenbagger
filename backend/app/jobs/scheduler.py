@@ -11,6 +11,10 @@
 - New filings: at 6:30 a.m. and 10:30 p.m. New York time (and a minute after startup), read
   EDGAR's daily index and refresh the companies that filed. See refresh_filings.py.
 - Tiers: at 2:00 a.m., promote and demote between warm and cold. See tiers.py.
+- Closes: at 5:00 p.m. on weekdays (and after startup), the latest close for every company,
+  then sector medians. See closes.py.
+- Insiders: at 11:15 p.m. (and a few minutes after startup), read new Form 4s for the warm
+  tier. See insiders.py.
 
 Set RUN_JOBS=false in the environment to turn them off (the tests do).
 """
@@ -26,6 +30,8 @@ from app import market
 from app.config import get_settings
 from app.db.models import Quote
 from app.db.session import session_scope
+from app.jobs.closes import closes_job
+from app.jobs.insiders import insiders_job
 from app.jobs.refresh_filings import filings_job
 from app.jobs.runs import recorded
 from app.jobs.tiers import tiers_job
@@ -110,6 +116,15 @@ def start() -> BackgroundScheduler | None:
     )
     scheduler.add_job(
         tiers_job, CronTrigger(hour=2, minute=0, timezone=market.NY), id="tiers", **common
+    )
+    scheduler.add_job(
+        closes_job,
+        CronTrigger(day_of_week="mon-fri", hour=17, minute=0, timezone=market.NY),
+        id="closes",
+        **common,
+    )
+    scheduler.add_job(
+        insiders_job, CronTrigger(hour=23, minute=15, timezone=market.NY), id="insiders", **common
     )
     # Catch up on filings missed while the app was off.
     scheduler.add_job(

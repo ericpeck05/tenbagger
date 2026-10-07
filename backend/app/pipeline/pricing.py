@@ -149,6 +149,9 @@ def apply_price(session: Session, cik: int, price: float) -> None:
     ).items():
         setattr(row, key, value)
     row.price, row.price_at = price, utcnow()
+    from app.pipeline.scoring import refresh_lynch
+
+    refresh_lynch(session, row)
 
 
 # ---------------------------------------------------------------- daily bars

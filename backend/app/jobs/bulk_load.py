@@ -23,8 +23,7 @@ from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 from app.config import get_settings
-from app.db.models import Base
-from app.db.session import get_engine, session_scope
+from app.db.session import get_engine, migrate, session_scope
 from app.jobs.load_sp500 import read_predecessors, read_sp500
 from app.pipeline.company import process_company
 from app.pipeline.tags import merge_companyfacts
@@ -64,14 +63,44 @@ _KEEP_UPPER = {
 }
 
 
+# Vowel-less abbreviations that read as words, so they are capitalized rather than kept upper.
+_ABBREVIATIONS = {
+    "LTD",
+    "MFG",
+    "BHD",
+    "INTL",
+    "SYS",
+    "SVCS",
+    "GRP",
+    "HLDGS",
+    "TR",
+    "TRS",
+    "FD",
+    "FDS",
+    "CTRS",
+    "BLDG",
+    "PPTYS",
+    "PRTNRS",
+    "ST",
+    "PHRM",
+    "TCH",
+    "TKY",
+}
+
+
 def tidy_name(name: str) -> str:
     """ "ACME UNITED CORP" -> "Acme United Corp". Mixed-case names are left alone."""
     if not name.isupper():
         return name
     words = []
     for w in name.split():
-        core = w.strip(".,/&()")
-        words.append(w if core in _KEEP_UPPER else w.capitalize())
+        core = w.strip(".,/()")
+        # Keep acronyms: known ones, anything with "&" (S&P, AT&T), and short vowel-less
+        # words (SPDR, CVS).
+        acronym = core not in _ABBREVIATIONS and (
+            core in _KEEP_UPPER or "&" in core or (len(core) <= 5 and not set(core) & set("AEIOUY"))
+        )
+        words.append(w if acronym else w.capitalize())
     return " ".join(words)
 
 
@@ -128,7 +157,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-    Base.metadata.create_all(get_engine())
+    migrate(get_engine())
     bulk_dir = get_settings().data_dir / "edgar" / "bulk"
     edgar = Edgar()
     facts_zip = download(edgar, FACTS_URL, bulk_dir / "companyfacts.zip")

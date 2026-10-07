@@ -1,13 +1,16 @@
 """Turn one company's EDGAR JSON into rows: company, tickers, filings, facts, and ratios."""
 
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
-from app.db.models import Company, FactRow, Filing, Ratio, Ticker
+from app.db.models import HISTORY_COLUMNS, Company, FactRow, Filing, Ratio, RatioHistory, Ticker
 from app.pipeline import ttm as T
-from app.pipeline.ratios import filing_ratios, fundamentals
+from app.pipeline.lynch import history_flags
+from app.pipeline.lynch_config import RANGE_YEARS
+from app.pipeline.ratios import filing_ratios, fundamentals, price_ratios
+from app.pipeline.scoring import refresh_lynch
 from app.pipeline.sector import is_financial, sector_for_sic
 from app.pipeline.tags import ALLOWED_FORMS, extract, is_foreign_filer
 from app.providers.edgar import filing_url
@@ -180,6 +183,14 @@ def store_facts_and_ratios(session: Session, company: Company, companyfacts: dic
             if f.form in ALLOWED_FORMS and (latest_filing is None or f.filed > latest_filing[0]):
                 latest_filing = (f.filed, f.form)
 
+    return compute_ratios(session, company, facts, latest_filing)
+
+
+def compute_ratios(
+    session: Session, company: Company, facts: dict, latest_filing: tuple[date, str] | None
+) -> dict:
+    """Ratios row, ratio history, and Lynch check for one company from its resolved facts."""
+    cik = company.cik
     fund = fundamentals(facts)
     ratios = filing_ratios(fund, financial=is_financial(company.sic_code))
     row = session.get(Ratio, cik) or Ratio(cik=cik)
@@ -192,7 +203,19 @@ def store_facts_and_ratios(session: Session, company: Company, companyfacts: dic
         setattr(row, key, value)
     row.shares_outstanding = fund.shares_outstanding
     row.equity, row.debt, row.cash = fund.equity, fund.debt, fund.cash
+    flags = history_flags(
+        fund.annual.get("net_income", {}), fund.annual.get("eps_diluted", {}), fund.net_income
+    )
+    for key, value in flags.items():
+        setattr(row, key, value)
+    if row.price:  # keep price-based ratios in step with the new filing
+        for key, value in price_ratios(
+            row.price, ratios, row.shares_outstanding, row.equity, row.debt, row.cash
+        ).items():
+            setattr(row, key, value)
+    refresh_lynch(session, row, company)
     session.add(row)
+    store_history(session, company, facts)
     company.facts_fetched_at = _now()
     return ratios
 
@@ -218,3 +241,37 @@ def process_company(
     if companyfacts is not None:
         store_facts_and_ratios(session, company, companyfacts)
     return company
+
+
+def store_history(session: Session, company: Company, facts: dict) -> int:
+    """Ratios at each of the last fiscal year ends (one more than the range needs), computed
+    from only the facts for periods ending by that date."""
+    session.execute(delete(RatioHistory).where(RatioHistory.cik == company.cik))
+    years = T.annual(facts.get("revenue", {})) or T.annual(facts.get("net_income", {}))
+    financial = is_financial(company.sic_code)
+    stored = 0
+    for year, fy in sorted(years.items())[-(RANGE_YEARS + 1) :]:
+        cutoff = fy.end + timedelta(days=3)
+        upto = {
+            m: {p: f for p, f in periods.items() if f.end <= cutoff} for m, periods in facts.items()
+        }
+        fund = fundamentals(upto)
+        if fund.as_of is None or abs((fund.as_of - fy.end).days) > 31:
+            continue
+        r = filing_ratios(fund, financial=financial)
+        r.update(
+            shares_outstanding=fund.shares_outstanding,
+            equity=fund.equity,
+            debt=fund.debt,
+            cash=fund.cash,
+        )
+        session.add(
+            RatioHistory(
+                cik=company.cik,
+                fiscal_year=year,
+                period_end=fy.end,
+                **{c: r.get(c) for c in HISTORY_COLUMNS},
+            )
+        )
+        stored += 1
+    return stored

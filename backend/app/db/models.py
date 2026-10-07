@@ -98,6 +98,12 @@ RATIO_COLUMNS = (
         for name in ("revenue", "eps", "fcf", "bvps", "inventory", "shares")
         for y in (1, 3, 5)
     ),
+    # Lynch category inputs from the fiscal-year history, and insider activity
+    "loss_recent",
+    "loss_shrinking",
+    "eps_drops_10y",
+    "insider_buys_6m",
+    "insider_sells_6m",
     # Inputs kept so price-based ratios can be recomputed from this row alone
     "shares_outstanding",
     "equity",
@@ -123,6 +129,7 @@ class Ratio(Base):
     price_at: Mapped[datetime | None] = mapped_column(DateTime)
     lynch_category: Mapped[str | None] = mapped_column(String(20))
     lynch_score: Mapped[float | None] = mapped_column(Float)
+    lynch_tests: Mapped[str | None] = mapped_column(Text)  # JSON: the nine tests and inputs
 
 
 # Declarative mapping accepts columns added after the class body; this keeps the long list
@@ -227,3 +234,83 @@ class JobRun(Base):
     ok: Mapped[bool | None] = mapped_column()
     detail: Mapped[str | None] = mapped_column(Text)
     cursor: Mapped[str | None] = mapped_column(Text)  # job-specific state, such as a date
+
+
+# Ratios stored per fiscal year end. Price-based ratios are computed when read, from the
+# closing price on each fiscal year end date, so only their inputs are kept here.
+HISTORY_COLUMNS = (
+    "eps_growth_5y",
+    "eps_growth_3y",
+    "revenue_ttm",
+    "eps_ttm",
+    "ebitda_ttm",
+    "fcf_ttm",
+    "dps_ttm",
+    "gross_margin",
+    "operating_margin",
+    "net_margin",
+    "roe",
+    "roic",
+    "cash_conversion",
+    "debt_to_equity",
+    "net_cash_per_share",
+    "net_debt_ebitda",
+    "current_ratio",
+    "interest_coverage",
+    "inventory_turnover",
+    "shares_outstanding",
+    "equity",
+    "debt",
+    "cash",
+)
+
+
+class RatioHistory(Base):
+    __tablename__ = "ratio_history"
+
+    cik: Mapped[int] = mapped_column(ForeignKey("companies.cik"), primary_key=True)
+    fiscal_year: Mapped[int] = mapped_column(Integer, primary_key=True)
+    period_end: Mapped[date] = mapped_column(Date)
+
+
+for _col in HISTORY_COLUMNS:
+    setattr(RatioHistory, _col, mapped_column(_col, Float, nullable=True))
+
+
+class SectorMedian(Base):
+    """Median of each ratio across a sector's companies above $300M market cap."""
+
+    __tablename__ = "sector_medians"
+
+    sector: Mapped[str] = mapped_column(String(60), primary_key=True)
+    metric: Mapped[str] = mapped_column(String(40), primary_key=True)
+    value: Mapped[float | None] = mapped_column(Float)
+    companies: Mapped[int] = mapped_column(Integer)
+    as_of: Mapped[datetime] = mapped_column(DateTime)
+
+
+class InsiderTrade(Base):
+    """Open-market purchases (P) and sales (S) from Form 4 filings."""
+
+    __tablename__ = "insider_trades"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    cik: Mapped[int] = mapped_column(Integer, index=True)
+    accession: Mapped[str] = mapped_column(String(25), index=True)
+    filed_at: Mapped[date] = mapped_column(Date)
+    trade_date: Mapped[date | None] = mapped_column(Date)
+    person: Mapped[str | None] = mapped_column(String(200))
+    role: Mapped[str | None] = mapped_column(String(100))
+    code: Mapped[str] = mapped_column(String(2))
+    shares: Mapped[float | None] = mapped_column(Float)
+    price: Mapped[float | None] = mapped_column(Float)
+
+
+class Form4Parsed(Base):
+    """Form 4 filings already read, so they are fetched once."""
+
+    __tablename__ = "form4_parsed"
+
+    cik: Mapped[int] = mapped_column(Integer, primary_key=True)
+    accession: Mapped[str] = mapped_column(String(25), primary_key=True)
+    parsed_at: Mapped[datetime] = mapped_column(DateTime)
