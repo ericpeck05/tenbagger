@@ -14,7 +14,11 @@ Needs Python 3.12+, Node 20+, and `gitleaks` (`brew install gitleaks`).
 2. `make setup`
 3. `make dev`, which opens http://localhost:5173
 
-Other commands: `make test`, `make lint`.
+Other commands:
+
+- `make load` loads S&P 500 fundamentals from SEC EDGAR into `data/tenbagger.db` (about two minutes the first time)
+- `make coverage` reports, per metric, how many S&P 500 companies resolve a value
+- `make test`, `make lint`
 
 ## Data sources
 
