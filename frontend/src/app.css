@@ -696,6 +696,32 @@
 .pill-pending {
   border-style: dashed;
   color: var(--muted);
+  font-weight: 400;
+}
+.pill-pass {
+  border-color: var(--up);
+  color: var(--up);
+}
+.pill-watch {
+  border-color: var(--watch);
+  background: var(--watch);
+  color: #000000;
+}
+.pill-fail {
+  border-color: var(--down);
+  color: var(--down);
+}
+.chip-on-static {
+  font-weight: 600;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #000000;
+}
+.score-math {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--muted);
 }
 
 /* ------------------------------------------------------------ ratio cards */
@@ -749,6 +775,22 @@
   top: 5px;
   height: 2px;
   background: var(--border-strong);
+}
+.rbar-now {
+  position: absolute;
+  top: 1px;
+  width: 6px;
+  height: 10px;
+  margin-left: -3px;
+  background: var(--accent);
+}
+.rbar-sector {
+  position: absolute;
+  top: 1px;
+  width: 2px;
+  height: 10px;
+  margin-left: -1px;
+  background: var(--muted);
 }
 .rbar-track.pending {
   height: 0;

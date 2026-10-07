@@ -31,9 +31,9 @@ export type Stock = {
   range_52w: { low: number; high: number } | null;
   annual: { years: number[]; revenue: (number | null)[]; eps: (number | null)[] };
   filings: Filing[];
-  lynch: null;
-  sector_medians: null;
-  ranges_5y: null;
+  lynch: Lynch | null;
+  sector_medians: Record<string, { value: number | null; companies: number }> | null;
+  ranges_5y: Ranges;
   market_open: boolean;
   sources: {
     fundamentals: {
@@ -45,6 +45,30 @@ export type Stock = {
     quote: { provider: string; fetched_at: string | null };
     prices: { provider: string; last_date: string | null };
   };
+};
+
+export type LynchTest = {
+  key: string;
+  label: string;
+  value: string | null;
+  status: "pass" | "watch" | "fail" | "missing";
+  weight: number;
+  points: number;
+  rule: string;
+};
+
+export type Lynch = {
+  category: string | null;
+  score: number | null;
+  tests: LynchTest[];
+  passed: number;
+  counted: number;
+};
+
+export type Ranges = {
+  years: number[];
+  metrics: Record<string, { low: number | null; high: number | null; values: (number | null)[] }>;
+  missing_prices: boolean;
 };
 
 export type Bar = { time: string; open: number; high: number; low: number; close: number };
@@ -107,6 +131,7 @@ export type Holding = {
   ticker: string;
   name: string;
   is_company: boolean;
+  is_fund: boolean;
   sector: string | null;
   shares: number;
   avg_cost: number | null;
@@ -120,6 +145,8 @@ export type Holding = {
   weight: number | null;
   category: string | null;
   lynch_score: number | null;
+  eps_ttm: number | null;
+  eps_growth: number | null;
   pe: number | null;
   peg: number | null;
 };
@@ -146,8 +173,17 @@ export type Portfolio = {
     trades: number;
   };
   holdings: Holding[];
-  allocation: { by_category: null; kinds: AllocRow[]; by_sector: AllocRow[] };
-  lookthrough: null;
+  allocation: { by_category: AllocRow[]; kinds: AllocRow[]; by_sector: AllocRow[] };
+  lookthrough: {
+    pe: number | null;
+    eps_growth: number | null;
+    peg: number | null;
+    lynch_score: number | null;
+    largest_weight: number;
+    largest: string;
+    below_cost: number;
+    stocks: number;
+  } | null;
   activity: Transaction[];
   filings: (Filing & { ticker: string | null })[];
   market_open: boolean;
