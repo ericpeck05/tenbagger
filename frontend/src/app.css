@@ -1,0 +1,171 @@
+/* Layout and component styles. Values follow design/stock-page.dc.html. */
+
+.app {
+  min-height: 100vh;
+}
+
+/* Top bar */
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.brand {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.cmdline {
+  flex: 1 1 280px;
+  max-width: 560px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  background: var(--panel);
+  color: var(--muted);
+  border: 1px solid var(--border-strong);
+  text-align: left;
+  cursor: pointer;
+}
+.cmdline:disabled {
+  cursor: default;
+}
+.cmdline-prompt {
+  font-weight: 600;
+  color: var(--accent);
+}
+.cmdline-cursor {
+  width: 8px;
+  height: 16px;
+  background: var(--accent);
+}
+.cmdline-hint {
+  flex: 1;
+  text-align: right;
+}
+.key {
+  font-size: 12px;
+  padding: 1px 6px;
+  border: 1px solid var(--border-strong);
+}
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+.tab {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--muted);
+}
+.tab-active {
+  font-weight: 600;
+  background: var(--accent);
+  color: #000000;
+}
+.tab-active:hover {
+  color: #000000;
+}
+.topbar-status {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.dot {
+  width: 8px;
+  height: 8px;
+}
+
+/* Panels */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+}
+.panel-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px 12px;
+  min-height: 34px;
+  padding: 0 10px;
+  background: var(--title-bar);
+  border-bottom: 1px solid var(--border);
+}
+.panel-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.panel-num {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0 6px;
+  background: var(--accent);
+  color: #000000;
+}
+.panel-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.panel-body {
+  padding: 14px 16px;
+}
+
+/* Phase 0 placeholder */
+.placeholder {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 20px;
+}
+.placeholder-lead {
+  margin: 0 0 14px;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--text-2);
+}
+.kv {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 24px;
+  margin: 0;
+}
+.kv dt {
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.kv dd {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    padding: 8px 16px;
+  }
+  .placeholder {
+    padding: 16px;
+  }
+}
