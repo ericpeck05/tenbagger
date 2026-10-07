@@ -1,6 +1,7 @@
 """Stock page endpoints. Fundamentals come from the database; only the quote and price bars
 are ever fetched on request, and only when the stored ones are out of date."""
 
+import json
 from datetime import date, datetime, timedelta
 from typing import Annotated
 
@@ -23,13 +24,28 @@ from app.db.models import (
     WatchItem,
 )
 from app.db.session import DbSession
-from app.pipeline import pricing
+from app.jobs import insiders
+from app.pipeline import pricing, ranges
+from app.pipeline.sector_medians import for_sector
 
 router = APIRouter()
 
 TREND_YEARS = 10
 RANGES = {"1M": 31, "6M": 183, "1Y": 366, "5Y": 5 * 366}
 WEEKLY_AFTER_DAYS = 190  # daily candles up to 6 months, weekly beyond
+
+
+def lynch_json(row: Ratio | None) -> dict | None:
+    if row is None or row.lynch_tests is None:
+        return None
+    tests = json.loads(row.lynch_tests)
+    return {
+        "category": row.lynch_category,
+        "score": row.lynch_score,
+        "tests": tests,
+        "passed": sum(1 for t in tests if t["status"] == "pass"),
+        "counted": sum(1 for t in tests if t["status"] != "missing"),
+    }
 
 
 def find_company(session: Session, ticker: str) -> tuple[str, Company]:
@@ -125,6 +141,9 @@ def stock(ticker: str, session: DbSession) -> dict:
     session.add(CompanyView(cik=company.cik, viewed_at=company.last_viewed_at))
     session.commit()
 
+    if ratios is not None and ratios.insider_buys_6m is None:
+        insiders.refresh_soon(company.cik)  # Form 4s are read in the background
+
     fetch = session.get(PriceFetch, symbol)
     tickers = session.scalars(select(Ticker.ticker).where(Ticker.cik == company.cik)).all()
     return {
@@ -144,9 +163,9 @@ def stock(ticker: str, session: DbSession) -> dict:
         "range_52w": range_52w(session, symbol),
         "annual": annual_series(session, company.cik),
         "filings": recent_filings(session, company.cik),
-        "lynch": None,  # phase 5
-        "sector_medians": None,  # phase 5
-        "ranges_5y": None,  # phase 5
+        "lynch": lynch_json(ratios),
+        "sector_medians": for_sector(session, company.sector),
+        "ranges_5y": ranges.five_year(session, company.cik, company.ticker),
         "market_open": market.is_open(),
         "sources": {
             "fundamentals": {
