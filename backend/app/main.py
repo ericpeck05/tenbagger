@@ -5,8 +5,7 @@ from fastapi import FastAPI
 
 from app import __version__
 from app.api import portfolio, search, status, stock, watchlist
-from app.db.models import Base
-from app.db.session import get_engine
+from app.db.session import get_engine, migrate
 from app.jobs import scheduler
 
 
@@ -15,7 +14,7 @@ async def lifespan(_app: FastAPI):
     logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s %(message)s")
     for noisy in ("httpx", "apscheduler"):
         logging.getLogger(noisy).setLevel(logging.WARNING)
-    Base.metadata.create_all(get_engine())
+    migrate(get_engine())
     jobs = scheduler.start()
     yield
     if jobs is not None:

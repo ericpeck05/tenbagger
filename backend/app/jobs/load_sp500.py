@@ -20,8 +20,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from app.config import get_settings
-from app.db.models import Base
-from app.db.session import get_engine, get_session
+from app.db.session import get_engine, get_session, migrate
 from app.pipeline.company import process_company
 from app.pipeline.tags import merge_companyfacts
 from app.providers.edgar import Edgar
@@ -81,7 +80,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-    Base.metadata.create_all(get_engine())
+    migrate(get_engine())
     universe = read_sp500()
     if args.only:
         wanted = {t.upper() for t in args.only}
