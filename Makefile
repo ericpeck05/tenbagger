@@ -1,4 +1,4 @@
-.PHONY: setup dev test lint format load bulk filings coverage demo
+.PHONY: setup dev test lint format load bulk filings coverage demo demo-reset
 
 PY := backend/.venv/bin/python
 URL := http://localhost:5173
@@ -23,7 +23,7 @@ dev: setup
 	@trap 'kill 0' INT TERM EXIT; \
 	(cd backend && .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload) & \
 	(cd frontend && npm run -s dev) & \
-	(for i in $$(seq 1 40); do curl -sf $(URL) >/dev/null && break; sleep 0.25; done; open $(URL)) & \
+	(for i in $$(seq 1 40); do curl -sf $(URL) >/dev/null && break; sleep 0.25; done; open $(URL) 2>/dev/null || xdg-open $(URL) 2>/dev/null || true) & \
 	wait
 
 test: setup
@@ -52,6 +52,20 @@ filings: setup
 coverage: setup
 	cd backend && .venv/bin/python -m app.jobs.coverage
 
-demo:
-	@echo "Demo mode arrives in phase 7."
-	@exit 1
+# Run on bundled sample data: real EDGAR fundamentals for ten companies, made-up prices and
+# portfolio. No keys, no network calls. Uses its own ports and database, so it can run
+# next to `make dev`.
+DEMO_ENV := DATA_DIR=$(CURDIR)/data/demo DEMO=true RUN_JOBS=false \
+	FINNHUB_API_KEY= ALPACA_KEY_ID= ALPACA_SECRET_KEY= SEC_USER_AGENT=
+DEMO_URL := http://localhost:5174
+
+demo: setup
+	cd backend && $(DEMO_ENV) .venv/bin/python -m app.demo.build --if-missing
+	@trap 'kill 0' INT TERM EXIT; \
+	(cd backend && $(DEMO_ENV) .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8100) & \
+	(cd frontend && PORT=5174 API_PORT=8100 npm run -s dev) & \
+	(for i in $$(seq 1 40); do curl -sf $(DEMO_URL) >/dev/null && break; sleep 0.25; done; open $(DEMO_URL) 2>/dev/null || xdg-open $(DEMO_URL) 2>/dev/null || true) & \
+	wait
+
+demo-reset:
+	rm -rf data/demo

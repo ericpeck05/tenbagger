@@ -19,7 +19,10 @@ export function TopBar({ route, ticker, onSearch, busy }: Props) {
   let dot = "var(--down)";
   let text = "Backend offline";
   if (st) {
-    if (!st.keys.finnhub) {
+    if (st.demo) {
+      dot = "var(--watch)";
+      text = "Demo mode, prices are made up";
+    } else if (!st.keys.finnhub) {
       dot = "var(--watch)";
       text = "No quotes: add a Finnhub key";
     } else if (st.market.open) {

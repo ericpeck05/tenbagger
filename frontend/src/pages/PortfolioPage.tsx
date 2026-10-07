@@ -14,6 +14,7 @@ import { Panel } from "../components/Panel";
 import { PerformanceChart } from "../components/PerformanceChart";
 import { TradeForm } from "../components/TradeForm";
 import { DASH, num, pct, signed, signedPct, signedPctPoints, tone } from "../format";
+import { useDemo } from "../hooks/useDemo";
 import { useHotkeys } from "../hooks/useHotkeys";
 import { jumpTo, PORTFOLIO_PANELS } from "../panels";
 import { navigate, stockPath } from "../router";
@@ -28,6 +29,7 @@ const RANGE_WORDS: Record<PerfRange, string> = {
 };
 
 export function PortfolioPage() {
+  const demo = useDemo();
   const [range, setRange] = useState<PerfRange>("1Y");
   const [form, setForm] = useState<{ editing: Transaction | null } | null>(null);
   const [showAll, setShowAll] = useState(false);
@@ -70,6 +72,7 @@ export function PortfolioPage() {
             <span className="chip">
               {s ? `${s.positions} position${s.positions === 1 ? "" : "s"}` : DASH}
             </span>
+            {demo && <span className="chip chip-pending">Sample data</span>}
           </div>
           <div className="stock-price">
             <span className="price num">{s ? num(s.value) : DASH}</span>
