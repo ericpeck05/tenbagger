@@ -11,7 +11,8 @@ from fastapi.testclient import TestClient
 
 from app.config import get_settings
 from app.db import session as db_session
-from app.db.models import Base, Company, PriceDaily, Quote, Ratio, Ticker
+from app.db.models import Company, PriceDaily, Quote, Ratio, Ticker
+from app.db.session import migrate
 from app.pipeline import pricing
 
 
@@ -24,7 +25,7 @@ def db(tmp_path, monkeypatch):
     get_settings.cache_clear()
     monkeypatch.setattr(db_session, "_engine", None)
     monkeypatch.setattr(pricing, "_providers", {"finnhub": None, "alpaca": None})
-    Base.metadata.create_all(db_session.get_engine())
+    migrate(db_session.get_engine())
     with db_session.session_scope() as session:
         yield session
     get_settings.cache_clear()

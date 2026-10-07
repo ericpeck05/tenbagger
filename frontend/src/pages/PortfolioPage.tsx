@@ -156,11 +156,13 @@ export function PortfolioPage() {
 
         <Panel number={2} id="allocation" title="Allocation" className="alloc-panel" bodyClass="alloc-body">
           <div>
-            <div className="alloc-head">
-              By Lynch category <span className="pending-note">Categories arrive in phase 5</span>
-            </div>
-            {(p?.allocation.kinds ?? []).map((k) => (
-              <AllocBar key={k.name} row={k} grey={k.name !== "Stocks"} />
+            <div className="alloc-head">By Lynch category</div>
+            {(p?.allocation.by_category ?? []).map((k) => (
+              <AllocBar
+                key={k.name}
+                row={k}
+                grey={["Index funds and ETFs", "Cash", "Not categorized"].includes(k.name)}
+              />
             ))}
           </div>
           <div>
@@ -177,18 +179,7 @@ export function PortfolioPage() {
 
       <div className="three-up">
         <Panel number={4} id="lookthrough" title="Look-through" className="third">
-          <div className="tiles">
-            {["P/E", "EPS growth", "PEG", "Lynch score", "Largest stock", "Below cost"].map((t) => (
-              <div key={t} className="tile">
-                <div className="tile-label">{t}</div>
-                <div className="tile-value muted">{DASH}</div>
-              </div>
-            ))}
-          </div>
-          <p className="fine">
-            The stocks treated as one company, weighted by value. Index funds and cash are left out.{" "}
-            <span className="pending-note">Arrives in phase 5</span>
-          </p>
+          <LookThrough lt={p?.lookthrough ?? null} />
         </Panel>
 
         <Panel
@@ -333,7 +324,7 @@ function HoldingsTable({ p }: { p: Portfolio | undefined }) {
           {rows.map((h) => (
             <a
               key={h.ticker}
-              className={h.is_company ? "h-grid h-row" : "h-grid h-row h-fund"}
+              className={h.is_fund ? "h-grid h-row h-fund" : "h-grid h-row"}
               href={h.is_company ? stockPath(h.ticker) : undefined}
               onClick={(e) => {
                 if (!h.is_company) return;
@@ -352,9 +343,11 @@ function HoldingsTable({ p }: { p: Portfolio | undefined }) {
               <div className="right num strong">{num(h.value)}</div>
               <div className={`right num ${tone(h.gain)}`}>{signed(h.gain)}</div>
               <div className={`right num ${tone(h.gain_pct)}`}>{signedPct(h.gain_pct)}</div>
-              <WeightBar weight={h.weight} max={maxWeight} grey={!h.is_company} />
+              <WeightBar weight={h.weight} max={maxWeight} grey={h.is_fund} />
               <div className="h-cat">{h.category ?? DASH}</div>
-              <div className="right num muted">{DASH}</div>
+              <div className={`right num strong ${scoreTone(h.lynch_score)}`}>
+                {h.lynch_score != null ? Math.round(h.lynch_score) : DASH}
+              </div>
               <div className="right num">{num(h.pe, 1)}</div>
               <div className="right num">{num(h.peg, 2)}</div>
             </a>
@@ -391,14 +384,51 @@ function HoldingsTable({ p }: { p: Portfolio | undefined }) {
               <div className={`right num ${tone(s.gain_pct)}`}>{signedPct(s.gain_pct)}</div>
               <div className="right num">100%</div>
               <div />
-              <div className="right num muted">{DASH}</div>
-              <div className="right num muted">{DASH}</div>
-              <div className="right num muted">{DASH}</div>
+              <div className="right num">
+                {p?.lookthrough?.lynch_score != null ? Math.round(p.lookthrough.lynch_score) : DASH}
+              </div>
+              <div className="right num">{num(p?.lookthrough?.pe, 1)}</div>
+              <div className="right num">{num(p?.lookthrough?.peg, 2)}</div>
             </div>
           )}
         </div>
       </div>
     </Panel>
+  );
+}
+
+/** Scores of 60 or less get the watch color, as in the mockup. */
+function scoreTone(score: number | null): string {
+  if (score == null) return "muted";
+  return score < 60 ? "watch" : "";
+}
+
+function LookThrough({ lt }: { lt: Portfolio["lookthrough"] }) {
+  const tiles = [
+    { label: "P/E", value: num(lt?.pe, 1) },
+    { label: "EPS growth", value: pct(lt?.eps_growth, 1) },
+    { label: "PEG", value: num(lt?.peg, 2) },
+    { label: "Lynch score", value: lt?.lynch_score != null ? String(Math.round(lt.lynch_score)) : DASH, accent: true },
+    { label: "Largest stock", value: lt ? pct(lt.largest_weight, 1) : DASH, title: lt?.largest },
+    { label: "Below cost", value: lt ? `${lt.below_cost} of ${lt.stocks}` : DASH },
+  ];
+  return (
+    <>
+      <div className="tiles">
+        {tiles.map((t) => (
+          <div key={t.label} className="tile" title={t.title}>
+            <div className="tile-label">{t.label}</div>
+            <div className="tile-value num" style={t.accent ? { color: "var(--accent)" } : undefined}>
+              {t.value}
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="fine">
+        The {lt ? `${lt.stocks} ` : ""}stocks treated as one company, weighted by value. P/E is total value over
+        the holdings' share of earnings. Index funds and cash are left out.
+      </p>
+    </>
   );
 }
 

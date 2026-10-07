@@ -209,6 +209,60 @@ def _returns_since(session: Session, since: date) -> tuple[float | None, float |
     return port, bench, base.date
 
 
+CATEGORY_ORDER = ("Fast grower", "Stalwart", "Slow grower", "Cyclical", "Turnaround", "Asset play")
+
+
+def _by_category(rows: list[dict], cash: float, total: float) -> list[dict]:
+    """Stocks by Lynch category, then funds and cash, as shares of the whole portfolio."""
+    sums: dict[str, float] = {}
+    for r in rows:
+        name = "Index funds and ETFs" if r["is_fund"] else r["category"]
+        sums[name or "Not categorized"] = sums.get(name or "Not categorized", 0.0) + r["value"]
+    order = [*CATEGORY_ORDER, "Not categorized", "Index funds and ETFs"]
+    out = [
+        {"name": n, "value": sums[n], "weight": sums[n] / total if total else 0}
+        for n in order
+        if n in sums
+    ]
+    out.append({"name": "Cash", "value": cash, "weight": cash / total if total else 0})
+    return out
+
+
+def lookthrough(rows: list[dict]) -> dict | None:
+    """The stocks treated as one company, weighted by value. Funds and cash are left out.
+
+    P/E is total stock value over the holdings' share of earnings (shares x EPS), not an
+    average of P/Es. EPS growth and Lynch score are averages weighted by value. PEG is that
+    P/E over that growth.
+    """
+    stocks = [r for r in rows if not r["is_fund"]]
+    if not stocks:
+        return None
+    value = sum(r["value"] for r in stocks)
+    with_eps = [r for r in stocks if r["eps_ttm"] is not None]
+    earnings = sum(r["shares"] * r["eps_ttm"] for r in with_eps)
+    covered = sum(r["value"] for r in with_eps)
+    pe = covered / earnings if earnings > 0 else None
+
+    def weighted(key: str) -> float | None:
+        have = [r for r in stocks if r[key] is not None]
+        weight = sum(r["value"] for r in have)
+        return sum(r[key] * r["value"] for r in have) / weight if weight else None
+
+    growth = weighted("eps_growth")
+    return {
+        "pe": pe,
+        "eps_growth": growth,
+        "peg": pe / (growth * 100) if pe and growth and growth > 0 else None,
+        "lynch_score": weighted("lynch_score"),
+        "largest_weight": max((r["weight"] or 0) for r in stocks),
+        "largest": max(stocks, key=lambda r: r["value"])["ticker"],
+        "below_cost": sum(1 for r in stocks if r["gain"] < 0),
+        "stocks": len(stocks),
+        "earnings_coverage": covered / value if value else None,
+    }
+
+
 @router.get("/portfolio")
 def portfolio(session: DbSession) -> dict:
     if holdings.daily_is_stale(session):
@@ -231,7 +285,9 @@ def portfolio(session: DbSession) -> dict:
             {
                 "ticker": ticker,
                 "name": company.name if company else ticker,
-                "is_company": company is not None,
+                "is_company": company is not None,  # has a stock page
+                # No reported fundamentals: index funds and ETFs (some file with the SEC too).
+                "is_fund": ratios is None,
                 "sector": company.sector if company else None,
                 "shares": pos.shares,
                 "avg_cost": pos.avg_cost,
@@ -244,8 +300,16 @@ def portfolio(session: DbSession) -> dict:
                 "value": value,
                 "gain": value - pos.cost,
                 "gain_pct": (value / pos.cost - 1) if pos.cost > 0 else None,
-                "category": None if company else "Fund",  # Lynch categories arrive in phase 5
-                "lynch_score": None,
+                "category": ratios.lynch_category if ratios else "Fund",
+                "lynch_score": ratios.lynch_score if ratios else None,
+                "eps_ttm": ratios.eps_ttm if ratios else None,
+                "eps_growth": (
+                    ratios.eps_growth_5y
+                    if ratios and ratios.eps_growth_5y is not None
+                    else ratios.eps_growth_3y
+                    if ratios
+                    else None
+                ),
                 "pe": ratios.pe if ratios else None,
                 "peg": ratios.peg if ratios else None,
                 "quote": quote_json(q),
@@ -268,7 +332,7 @@ def portfolio(session: DbSession) -> dict:
     sectors: dict[str, float] = {}
     funds = 0.0
     for r in rows:
-        if r["is_company"]:
+        if not r["is_fund"]:
             sectors[r["sector"] or "Other"] = sectors.get(r["sector"] or "Other", 0.0) + r["value"]
         else:
             funds += r["value"]
@@ -317,7 +381,7 @@ def portfolio(session: DbSession) -> dict:
         },
         "holdings": rows,
         "allocation": {
-            "by_category": None,  # phase 5
+            "by_category": _by_category(rows, book.cash, total),
             "kinds": [
                 {"name": "Stocks", "value": stocks, "weight": stocks / total if total else 0},
                 {
@@ -329,7 +393,7 @@ def portfolio(session: DbSession) -> dict:
             ],
             "by_sector": by_sector,
         },
-        "lookthrough": None,  # phase 5
+        "lookthrough": lookthrough(rows),
         "activity": [tx_json(t) for t in activity],
         "filings": [
             {

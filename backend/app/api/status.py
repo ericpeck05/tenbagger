@@ -5,8 +5,8 @@ from sqlalchemy import func, select, text
 
 from app import __version__, market
 from app.config import get_settings
-from app.db.models import Base, Company, FactRow, JobRun, PriceDaily, Quote, Ratio
-from app.db.session import get_engine
+from app.db.models import Company, FactRow, JobRun, PriceDaily, Quote, Ratio
+from app.db.session import get_engine, migrate
 
 router = APIRouter()
 
@@ -15,7 +15,7 @@ router = APIRouter()
 def status() -> dict:
     settings = get_settings()
     engine = get_engine()
-    Base.metadata.create_all(engine)
+    migrate(engine)
     with engine.connect() as conn:
         db_ok = conn.execute(text("select 1")).scalar() == 1
         tiers = dict(conn.execute(select(Company.tier, func.count()).group_by(Company.tier)).all())

@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 
-import { api, type Bar, type ChartRange, keys, type Stock } from "../api";
+import { api, type Bar, type ChartRange, keys, type Lynch, type LynchTest, type Stock } from "../api";
 import { Panel } from "../components/Panel";
 import { lastBar } from "../chart";
 import { type ChartKind, PriceChart } from "../components/PriceChart";
@@ -58,6 +58,14 @@ export function StockPage({ ticker }: { ticker: string }) {
     placeholderData: (prev) => (prev?.ticker === ticker ? prev : undefined),
     staleTime: 5 * 60_000,
   });
+
+  // A cold stock's first open fetches its price history; refresh the stock once it lands so
+  // price-based 5-year ranges can be drawn.
+  const needsPrices = stock.data?.ticker === ticker && stock.data.ranges_5y.missing_prices;
+  const pricesLoaded = prices.data?.ticker === ticker && prices.data.bars.length > 0;
+  useEffect(() => {
+    if (needsPrices && pricesLoaded) qc.invalidateQueries({ queryKey: keys.stock(ticker) });
+  }, [needsPrices, pricesLoaded, qc, ticker]);
 
   // keepPreviousData: the previous stock stays on screen until the next one is ready.
   const s = stock.data;
@@ -183,9 +191,7 @@ function StockBody({ s, loadingNext, prices, range, setRange, kind, setKind, onW
                 No reported financials
               </span>
             )}
-            <span className="chip chip-pending" title="Lynch categories arrive in phase 5">
-              Lynch, phase 5
-            </span>
+            {s.lynch?.category && <span className="chip chip-on-static">{s.lynch.category}</span>}
             <button
               type="button"
               className={s.watching ? "chip chip-btn chip-on" : "chip chip-btn"}
@@ -211,7 +217,10 @@ function StockBody({ s, loadingNext, prices, range, setRange, kind, setKind, onW
           <Stat label="Mkt cap" value={big(r.market_cap)} />
           <Stat label="P/E" value={num(r.pe, 1)} />
           <Stat label="PEG" value={num(r.peg, 2)} />
-          <Stat label="Lynch" value={DASH} title="Lynch score arrives in phase 5" />
+          <Stat
+            label="Lynch"
+            value={s.lynch?.score != null ? `${Math.round(s.lynch.score)} / 100` : DASH}
+          />
           <div className="stat stat-range">
             <div className="stat-label">52-week range</div>
             <RangeBar low={r52?.low} high={r52?.high} value={q?.price} />
@@ -313,11 +322,11 @@ function StockBody({ s, loadingNext, prices, range, setRange, kind, setKind, onW
         </div>
       </Panel>
 
-      {/* 2 Lynch (phase 5) */}
-      <LynchPlaceholder />
+      {/* 2 Lynch */}
+      <LynchPanel lynch={s.lynch} />
 
       {/* 3-6 Ratio cards */}
-      <RatioCards ratios={r} />
+      <RatioCards stock={s} />
 
       <div className="two-up">
         {/* 7 Trend */}
@@ -404,52 +413,92 @@ function RangeBar({ low, high, value }: { low?: number | null; high?: number | n
 }
 
 const LYNCH_CATEGORIES = ["Slow grower", "Stalwart", "Fast grower", "Cyclical", "Turnaround", "Asset play"];
-const LYNCH_TESTS = [
-  "PEG under 1.0",
-  "P/E between 5 and 25",
-  "EPS growth above 15%",
-  "Revenue growth holding up",
-  "Debt to equity under 0.5",
-  "Net cash is positive",
-  "Inventory slower than sales",
-  "Insider buying, 6 months",
-  "Market cap 300M to 10B",
+
+const TEST_ORDER = [
+  "peg",
+  "pe",
+  "eps_growth",
+  "revenue_holding",
+  "debt_to_equity",
+  "net_cash",
+  "inventory",
+  "insiders",
+  "market_cap",
 ];
 
-function LynchPlaceholder() {
+const PILL: Record<LynchTest["status"], string> = {
+  pass: "pill pill-pass",
+  watch: "pill pill-watch",
+  fail: "pill pill-fail",
+  missing: "pill pill-pending",
+};
+
+function LynchPanel({ lynch }: { lynch: Lynch | null }) {
+  // The mockup's order, which pairs related tests across the two columns.
+  const tests = [...(lynch?.tests ?? [])].sort((a, b) => TEST_ORDER.indexOf(a.key) - TEST_ORDER.indexOf(b.key));
+  const available = tests.filter((t) => t.status !== "missing").reduce((a, t) => a + t.weight, 0);
+  const earned = tests.reduce((a, t) => a + t.points, 0);
+  const skipped = tests.filter((t) => t.status === "missing").length;
   return (
     <Panel
       number={2}
       id="lynch"
       title="Lynch check"
-      right={<span className="panel-right pending-note">Arrives in phase 5</span>}
+      right={
+        <span className="panel-right">
+          {lynch ? `${lynch.passed} of ${lynch.counted} tests passed` : "No data"}
+        </span>
+      }
       bodyClass="lynch-body"
     >
       <div className="lynch-score">
         <div className="score-line">
-          <span className="score score-pending">{DASH}</span>
+          <span className={lynch?.score != null ? "score" : "score score-pending"}>
+            {lynch?.score != null ? Math.round(lynch.score) : DASH}
+          </span>
           <span className="muted-caps">out of 100</span>
         </div>
         <div className="chips">
           {LYNCH_CATEGORIES.map((c) => (
-            <span key={c} className="chip">
+            <span key={c} className={lynch?.category === c ? "chip chip-on-static" : "chip"}>
               {c}
             </span>
           ))}
         </div>
+        {lynch && (
+          <p className="score-math">
+            {earned % 1 ? earned.toFixed(1) : earned} of {available} points
+            {skipped ? `, ${skipped} test${skipped > 1 ? "s" : ""} without data left out` : ""}, scaled to
+            100. A pass earns the full weight, a watch half.
+          </p>
+        )}
       </div>
       <div className="lynch-tests">
-        {LYNCH_TESTS.map((t) => (
-          <div key={t} className="lynch-test">
-            <span className="lynch-test-label">{t}</span>
-            <span className="lynch-test-value">{DASH}</span>
-            <span className="pill pill-pending">{DASH}</span>
+        {(tests.length ? tests : LYNCH_EMPTY).map((t) => (
+          <div key={t.key} className="lynch-test" title={`${t.rule}. Weight ${t.weight}.`}>
+            <span className="lynch-test-label">{t.label}</span>
+            <span className={t.status === "missing" ? "lynch-test-value muted" : "lynch-test-value"}>
+              {t.value ?? DASH}
+            </span>
+            <span className={PILL[t.status]}>{t.status === "missing" ? "No data" : t.status}</span>
           </div>
         ))}
       </div>
     </Panel>
   );
 }
+
+const LYNCH_EMPTY: LynchTest[] = [
+  "PEG under 1.0",
+  "EPS growth above 15%",
+  "P/E between 5 and 25",
+  "Revenue growth holding up",
+  "Debt to equity under 0.5",
+  "Inventory slower than sales",
+  "Insider buying, 6 months",
+  "Market cap 300M to 10B",
+  "Net cash is positive",
+].map((label) => ({ key: label, label, value: null, status: "missing", weight: 0, points: 0, rule: "" }));
 
 function TrendBars({
   label,

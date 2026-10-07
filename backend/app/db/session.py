@@ -34,6 +34,27 @@ def get_engine() -> Engine:
     return _engine
 
 
+def migrate(engine: Engine) -> None:
+    """Create missing tables and add missing nullable columns to existing ones.
+
+    SQLite's create_all never alters an existing table, so new columns added to the models
+    in later phases are added here. Columns are only ever added, never changed or dropped.
+    """
+    from sqlalchemy import inspect, text
+
+    from app.db.models import Base
+
+    Base.metadata.create_all(engine)
+    inspector = inspect(engine)
+    with engine.begin() as conn:
+        for table in Base.metadata.sorted_tables:
+            have = {c["name"] for c in inspector.get_columns(table.name)}
+            for col in table.columns:
+                if col.name not in have:
+                    kind = col.type.compile(dialect=engine.dialect)
+                    conn.execute(text(f'ALTER TABLE "{table.name}" ADD COLUMN "{col.name}" {kind}'))
+
+
 def get_session() -> Iterator[Session]:
     get_engine()
     assert _SessionLocal is not None

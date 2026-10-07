@@ -16,6 +16,18 @@ COMPANYFACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"
 ARCHIVE_URL = "https://www.sec.gov/Archives/edgar/data/{cik}/{accession}/{document}"
 
 
+_limiter: RateLimiter | None = None
+
+
+def _shared_limiter(per_second: float) -> RateLimiter:
+    """One limiter for every EDGAR client in the process, so jobs running at the same time
+    still stay under SEC's limit together."""
+    global _limiter
+    if _limiter is None:
+        _limiter = RateLimiter(per_second, 1.0)
+    return _limiter
+
+
 def pad_cik(cik: int | str) -> str:
     return str(int(cik)).zfill(10)
 
@@ -33,7 +45,7 @@ class Edgar(HttpProvider):
         if not user_agent:
             raise ProviderError("SEC_USER_AGENT is not set in .env")
         super().__init__(
-            RateLimiter(settings.edgar_per_second, 1.0),
+            _shared_limiter(settings.edgar_per_second),
             headers={"User-Agent": user_agent, "Accept-Encoding": "gzip, deflate"},
             transport=transport,
         )

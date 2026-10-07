@@ -101,3 +101,29 @@ def test_performance_draws_portfolio_and_benchmark(client, acme):
     # 50 shares from 20 to 25: +25%. SPY from 500 to 520: +4%.
     assert body["portfolio_return"] == pytest.approx(0.25)
     assert body["benchmark_return"] == pytest.approx(0.04)
+
+
+def test_lookthrough_treats_stocks_as_one_company():
+    from app.api.portfolio import lookthrough
+
+    rows = [
+        # 100 shares at 20 (value 2,000), EPS 2: earnings 200.
+        {"ticker": "A", "is_company": True, "is_fund": False,
+         "shares": 100, "value": 2_000, "eps_ttm": 2.0,
+         "eps_growth": 0.20, "lynch_score": 80, "weight": 0.4, "gain": 100},
+        # 50 shares at 60 (value 3,000), EPS 1: earnings 50.
+        {"ticker": "B", "is_company": True, "is_fund": False,
+         "shares": 50, "value": 3_000, "eps_ttm": 1.0,
+         "eps_growth": 0.10, "lynch_score": 40, "weight": 0.6, "gain": -50},
+        {"ticker": "FUND", "is_company": False, "is_fund": True,
+         "shares": 10, "value": 9_999, "eps_ttm": None,
+         "eps_growth": None, "lynch_score": None, "weight": 0.5, "gain": 0},
+    ]  # fmt: skip
+    lt = lookthrough(rows)
+    # P/E = 5,000 / 250 = 20, not the average of 10 and 60.
+    assert lt["pe"] == pytest.approx(20.0)
+    # Growth and score weighted by value: (0.2 x 2,000 + 0.1 x 3,000) / 5,000 = 0.14; 56.
+    assert lt["eps_growth"] == pytest.approx(0.14)
+    assert lt["lynch_score"] == pytest.approx(56.0)
+    assert lt["peg"] == pytest.approx(20 / 14)
+    assert lt["largest"] == "B" and lt["below_cost"] == 1 and lt["stocks"] == 2

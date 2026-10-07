@@ -29,6 +29,9 @@ def test_tidy_name():
     assert tidy_name("ACME UNITED CORP") == "Acme United Corp"
     assert tidy_name("ENERGY TRANSFER LP") == "Energy Transfer LP"
     assert tidy_name("Apple Inc.") == "Apple Inc."
+    assert tidy_name("SPDR S&P 500 ETF TRUST") == "SPDR S&P 500 ETF Trust"
+    assert tidy_name("AGNICO EAGLE MINES LTD") == "Agnico Eagle Mines Ltd"
+    assert tidy_name("H&R BLOCK INC") == "H&R Block Inc"
 
 
 def _company(session, cik, ticker, tier, in_sp500=False, last_viewed=None):
