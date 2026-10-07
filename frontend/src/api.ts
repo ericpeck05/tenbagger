@@ -88,6 +88,81 @@ export type Status = {
   tiers: Record<string, number>;
 };
 
+export type TxType = "buy" | "sell" | "deposit" | "withdrawal" | "dividend";
+
+export type Transaction = {
+  id: number;
+  date: string;
+  type: TxType;
+  ticker: string | null;
+  shares: number | null;
+  price: number | null;
+  amount: number;
+  note: string | null;
+};
+
+export type TradeInput = Omit<Transaction, "id" | "amount"> & { amount: number | null };
+
+export type Holding = {
+  ticker: string;
+  name: string;
+  is_company: boolean;
+  sector: string | null;
+  shares: number;
+  avg_cost: number | null;
+  cost: number;
+  price: number;
+  day_change: number | null;
+  day_change_pct: number | null;
+  value: number;
+  gain: number;
+  gain_pct: number | null;
+  weight: number | null;
+  category: string | null;
+  lynch_score: number | null;
+  pe: number | null;
+  peg: number | null;
+};
+
+export type AllocRow = { name: string; value: number; weight: number };
+
+export type Portfolio = {
+  summary: {
+    value: number;
+    invested: number;
+    cash: number;
+    cost_basis: number;
+    gain: number;
+    gain_pct: number | null;
+    realized: number;
+    dividends: number;
+    net_deposits: number;
+    day_change: number;
+    day_change_pct: number | null;
+    return_1y: number | null;
+    benchmark_1y: number | null;
+    return_since: string | null;
+    positions: number;
+    trades: number;
+  };
+  holdings: Holding[];
+  allocation: { by_category: null; kinds: AllocRow[]; by_sector: AllocRow[] };
+  lookthrough: null;
+  activity: Transaction[];
+  filings: (Filing & { ticker: string | null })[];
+  market_open: boolean;
+};
+
+export type PerfRange = "1M" | "6M" | "YTD" | "1Y" | "ALL";
+
+export type Performance = {
+  range: PerfRange;
+  points: { time: string; portfolio: number; benchmark: number | null; value: number }[];
+  portfolio_return: number | null;
+  benchmark_return: number | null;
+  benchmark?: string;
+};
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -123,6 +198,20 @@ export const api = {
   watchlist: () => request<Watchlist>("/api/watchlist"),
   watch: (ticker: string) =>
     request<Watchlist>("/api/watchlist", { method: "POST", body: JSON.stringify({ ticker }) }),
+  portfolio: () => request<Portfolio>("/api/portfolio"),
+  performance: (range: PerfRange) =>
+    request<Performance>(`/api/portfolio/performance?range=${range}`),
+  transactions: () => request<Transaction[]>("/api/transactions"),
+  addTrade: (t: TradeInput) =>
+    request<Transaction>("/api/transactions", { method: "POST", body: JSON.stringify(t) }),
+  editTrade: (id: number, t: TradeInput) =>
+    request<Transaction>(`/api/transactions/${id}`, { method: "PUT", body: JSON.stringify(t) }),
+  deleteTrade: (id: number) =>
+    request<{ deleted: number }>(`/api/transactions/${id}`, { method: "DELETE" }),
+  quote: (ticker: string) =>
+    request<{ ticker: string; name: string | null; quote: Quote | null }>(
+      `/api/quote/${encodeURIComponent(ticker)}`,
+    ),
   unwatch: (ticker: string) =>
     request<Watchlist>(`/api/watchlist/${encodeURIComponent(ticker)}`, { method: "DELETE" }),
 };
@@ -132,4 +221,7 @@ export const keys = {
   prices: (t: string, r: ChartRange) => ["prices", t, r] as const,
   watchlist: ["watchlist"] as const,
   status: ["status"] as const,
+  portfolio: ["portfolio"] as const,
+  performance: (r: PerfRange) => ["performance", r] as const,
+  transactions: ["transactions"] as const,
 };

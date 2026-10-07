@@ -176,3 +176,31 @@ class WatchItem(Base):
     ticker: Mapped[str] = mapped_column(String(12), primary_key=True)
     added_at: Mapped[datetime] = mapped_column(DateTime)
     position: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class Transaction(Base):
+    """One entry in the trade log. Shares, cost, and cash are always derived from the log."""
+
+    __tablename__ = "transactions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    date: Mapped[date] = mapped_column(Date, index=True)
+    type: Mapped[str] = mapped_column(String(12))  # buy, sell, deposit, withdrawal, dividend
+    ticker: Mapped[str | None] = mapped_column(String(12))
+    shares: Mapped[float | None] = mapped_column(Float)
+    price: Mapped[float | None] = mapped_column(Float)
+    amount: Mapped[float] = mapped_column(Float)  # cash moved, always positive
+    note: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+
+
+class PortfolioDaily(Base):
+    """Portfolio value per trading day, rebuilt from the first trade whenever the log changes."""
+
+    __tablename__ = "portfolio_daily"
+
+    date: Mapped[date] = mapped_column(Date, primary_key=True)
+    value: Mapped[float] = mapped_column(Float)
+    cash: Mapped[float] = mapped_column(Float)
+    net_deposits: Mapped[float] = mapped_column(Float)  # cumulative money put in
+    return_index: Mapped[float] = mapped_column(Float)  # time-weighted, starts at 1.0

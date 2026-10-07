@@ -1030,6 +1030,440 @@
   color: var(--accent);
 }
 
+/* ------------------------------------------------------------ portfolio */
+.portfolio {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.caps-title {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.head-right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 12px;
+}
+.btn {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--text-2);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.btn:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+.btn-primary,
+.btn-primary:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #000000;
+}
+.btn-tall {
+  min-height: 44px;
+  padding: 0 16px;
+}
+.btn-danger {
+  color: var(--down);
+  border-color: var(--down);
+}
+.btn-danger:hover {
+  color: #000000;
+  background: var(--down);
+  border-color: var(--down);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.link-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--text-2);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.link-btn:hover {
+  color: var(--accent);
+}
+.perf-panel {
+  flex: 3 1 560px;
+  min-width: 0;
+}
+#performance .panel-bar {
+  padding: 4px 6px 4px 10px;
+}
+.perf-box {
+  height: 380px;
+}
+.series-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.line-solid {
+  display: inline-block;
+  width: 16px;
+  height: 3px;
+  background: var(--accent);
+}
+.line-dashed {
+  display: inline-block;
+  width: 16px;
+  border-top: 2px dashed var(--muted);
+}
+.alloc-panel {
+  flex: 2 1 380px;
+  min-width: 0;
+}
+#allocation .panel-bar {
+  min-height: 36px;
+}
+.alloc-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 14px;
+}
+.alloc-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.alloc-row {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) 56px;
+  column-gap: 10px;
+  align-items: center;
+  min-height: 26px;
+}
+.alloc-track,
+.weight-track {
+  height: 10px;
+  background: var(--divider);
+}
+.alloc-track > span,
+.weight-track > span {
+  display: block;
+  height: 100%;
+}
+.muted-2 {
+  color: var(--text-2);
+}
+#holdings .panel-bar {
+  min-height: 36px;
+}
+.flush-x {
+  padding: 0;
+}
+.table-scroll {
+  overflow-x: auto;
+}
+.holdings {
+  min-width: 1180px;
+  padding: 6px 14px 8px;
+}
+.h-grid {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) 64px 80px 80px 72px 104px 104px 72px 110px 120px 56px 56px 56px;
+  column-gap: 12px;
+  align-items: center;
+}
+.h-head {
+  padding: 6px 0;
+}
+.h-th {
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.h-th.right {
+  text-align: right;
+}
+.h-th:disabled {
+  cursor: default;
+}
+.h-th:not(:disabled):hover,
+.h-th.sorted {
+  color: var(--accent);
+}
+.h-row {
+  min-height: 44px;
+  border-top: 1px solid var(--divider);
+  text-decoration: none;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+a.h-row[href]:hover {
+  background: #121212;
+  color: var(--text);
+}
+.h-ticker {
+  display: inline-block;
+  min-width: 52px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.h-fund .h-ticker {
+  color: #6a6a6a;
+}
+.h-name {
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--text-2);
+}
+.h-cat {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-2);
+}
+.h-cash {
+  min-height: 40px;
+  color: var(--text-2);
+}
+.h-cash .h-ticker {
+  color: var(--text-2);
+}
+.h-cash .text {
+  color: var(--text);
+}
+.h-total {
+  min-height: 44px;
+  border-top: 1px solid var(--border-strong);
+  font-weight: 600;
+}
+.caps-accent {
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.weight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.weight-track {
+  flex: 1;
+  height: 8px;
+}
+.weight .num {
+  min-width: 44px;
+  text-align: right;
+}
+.ellipsis {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.three-up {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.third {
+  flex: 1 1 340px;
+  min-width: 0;
+}
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+}
+.tile {
+  padding: 10px 12px;
+  background: var(--panel);
+}
+.tile-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.tile-value {
+  font-size: 22px;
+  font-weight: 500;
+}
+.fine {
+  margin: 10px 0 0;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--muted);
+}
+.activity {
+  display: grid;
+  grid-template-columns: 84px 64px minmax(0, 1fr) 84px;
+  column-gap: 10px;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--divider);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.activity:last-child {
+  border-bottom: 0;
+}
+.activity:hover {
+  background: #121212;
+}
+.activity-scroll {
+  max-height: 300px;
+  overflow-y: auto;
+}
+.pill-sm {
+  min-width: 0;
+  font-size: 11px;
+  padding: 2px 0;
+}
+.pill-up {
+  border-color: var(--up);
+  color: var(--up);
+}
+.pill-down {
+  border-color: var(--down);
+  color: var(--down);
+}
+.pill-cash {
+  border-color: var(--muted);
+  color: var(--text-2);
+}
+.pf-filing {
+  display: grid;
+  grid-template-columns: 84px 48px 56px minmax(0, 1fr);
+  column-gap: 10px;
+  align-items: center;
+  min-height: 44px;
+  border-bottom: 1px solid var(--divider);
+  text-decoration: none;
+  color: var(--text);
+}
+.pf-filing:last-child {
+  border-bottom: 0;
+}
+.pf-filing:hover .filing-title {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+/* ------------------------------------------------------------ trade form */
+.trade-form {
+  width: 100%;
+  max-width: 560px;
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+}
+.trade-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+}
+.seg-full .seg-btn {
+  flex: 1;
+}
+.fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.field-wide {
+  grid-column: 1 / -1;
+}
+.field input {
+  height: 40px;
+  padding: 0 10px;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 0;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  text-transform: none;
+  letter-spacing: 0;
+  color-scheme: dark;
+}
+.field input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.trade-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 18px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.form-error {
+  padding: 8px 10px;
+  border: 1px solid var(--down);
+  color: var(--down);
+  font-size: 12px;
+}
+.trade-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--title-bar);
+  border-top: 1px solid var(--border);
+}
+.trade-private {
+  margin-right: auto;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 /* ------------------------------------------------------------ other pages */
 .soon {
   max-width: 1440px;
@@ -1080,6 +1514,18 @@
   }
   .hit-name .hit-sector,
   .hit-enter {
+    display: none;
+  }
+  .portfolio {
+    padding: 16px;
+  }
+  .alloc-row {
+    grid-template-columns: 110px minmax(0, 1fr) 52px;
+  }
+  .fields {
+    grid-template-columns: 1fr;
+  }
+  .trade-private {
     display: none;
   }
 }
