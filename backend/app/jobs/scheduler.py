@@ -8,6 +8,10 @@
   every warm ticker's bars and the SPY benchmark, then rebuild the portfolio's daily
   series. The first run backfills history since 2016.
 
+- New filings: at 6:30 a.m. and 10:30 p.m. New York time (and a minute after startup), read
+  EDGAR's daily index and refresh the companies that filed. See refresh_filings.py.
+- Tiers: at 2:00 a.m., promote and demote between warm and cold. See tiers.py.
+
 Set RUN_JOBS=false in the environment to turn them off (the tests do).
 """
 
@@ -22,6 +26,9 @@ from app import market
 from app.config import get_settings
 from app.db.models import Quote
 from app.db.session import session_scope
+from app.jobs.refresh_filings import filings_job
+from app.jobs.runs import recorded
+from app.jobs.tiers import tiers_job
 from app.pipeline import holdings, pricing
 
 log = logging.getLogger(__name__)
@@ -60,13 +67,14 @@ def bars_job() -> int:
     if pricing.alpaca() is None:
         return 0
     total = 0
-    with session_scope() as session:
+    with session_scope() as session, recorded(session, "bars") as detail:
         wanted = [*pricing.warm_tickers(session), holdings.BENCHMARK]
         tickers = [t for t in wanted if pricing.bars_needed(session, t)]
         for i in range(0, len(tickers), BARS_BATCH):
             total += pricing.update_bars(session, tickers[i : i + BARS_BATCH])
         # New closes mean a new day in the portfolio's daily series.
         holdings.rebuild_daily(session, fetch=False)
+        detail.update(tickers=len(tickers), bars=total)
     if tickers:
         log.info("daily bars: %d tickers topped up, %d bars stored", len(tickers), total)
     return total
@@ -93,6 +101,19 @@ def start() -> BackgroundScheduler | None:
         CronTrigger(day_of_week="mon-fri", hour=16, minute=30, timezone=market.NY),
         id="bars",
         **common,
+    )
+    scheduler.add_job(
+        filings_job,
+        CronTrigger(hour="6,22", minute=30, timezone=market.NY),
+        id="filings",
+        **common,
+    )
+    scheduler.add_job(
+        tiers_job, CronTrigger(hour=2, minute=0, timezone=market.NY), id="tiers", **common
+    )
+    # Catch up on filings missed while the app was off.
+    scheduler.add_job(
+        filings_job, "date", run_date=now + timedelta(seconds=60), id="filings-startup"
     )
     scheduler.start()
     return scheduler

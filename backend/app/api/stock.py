@@ -12,6 +12,7 @@ from app import market
 from app.db.models import (
     RATIO_COLUMNS,
     Company,
+    CompanyView,
     FactRow,
     Filing,
     PriceDaily,
@@ -121,6 +122,7 @@ def stock(ticker: str, session: DbSession) -> dict:
 
     company.view_count = (company.view_count or 0) + 1
     company.last_viewed_at = pricing.utcnow()
+    session.add(CompanyView(cik=company.cik, viewed_at=company.last_viewed_at))
     session.commit()
 
     fetch = session.get(PriceFetch, symbol)
