@@ -113,6 +113,8 @@ One SQLite file, `data/tenbagger.db`. Ratios are stored, not computed per reques
 | `price_fetches` | Ticker | `ticker`, `fetched_at`, `first_date`, `last_date`: when bars were last topped up, so a cold stock is not re-requested on every open |
 | `filings` | Company, filing | `cik`, `accession`, `form`, `period`, `filed_at`, `title`, `url`. Keyed by both: one filing can be listed under several companies |
 | `watchlist` | Ticker | `ticker`, `added_at`, `position` |
+| `company_views` | Stock page open | `cik`, `viewed_at`. Kept for 30 days, for the promotion rule |
+| `job_runs` | Background job | `name`, `started_at`, `finished_at`, `ok`, `detail`, `cursor` |
 | `insider_trades` | Form 4 transaction | `cik`, `filed_at`, `person`, `role`, `code`, `shares`, `price` |
 | `transactions` | Trade or cash movement | `id`, `date`, `type`, `ticker`, `shares`, `price`, `amount`, `note` |
 | `portfolio_daily` | Day | `date`, `value`, `cash`, `net_deposits`, `return_index` |
@@ -138,11 +140,13 @@ The S&P 500 list is used instead of the Fortune 500, because Fortune ranks by re
 
 **Jobs**
 
-1. **Bulk load, once.** Download `companyfacts.zip` and `submissions.zip`. Read them as a stream, one company at a time, keep only the mapped tags, and fill `companies`, `facts`, and `filings`. Then compute `ratios`, `ratio_history`, and `sector_medians`. The files are large, so never unzip them fully to disk.
-2. **New filings, nightly.** Check the EDGAR daily index for 10-K, 10-Q, 8-K, and Form 4 filings since the last run. For each company that filed, pull its `companyfacts` JSON, replace its facts, and recompute its ratios. Recompute sector medians once at the end.
+1. **Bulk load, once (`make bulk`).** Download `companyfacts.zip` (1.4 GB) and `submissions.zip` (1.6 GB), skipping a download when the local copy is as new as EDGAR's. Read them one company at a time straight out of the zip, never unzipping to disk, and fill `companies`, `tickers`, `facts`, `filings`, and `ratios`. The universe is every CIK in EDGAR's ticker list (about 8,000 companies). The zips are deleted afterwards unless `--keep` is passed, since EDGAR rebuilds them nightly. `ratio_history` and `sector_medians` come in phase 5. All-caps EDGAR names are tidied ("ACME UNITED CORP" becomes "Acme United Corp").
+2. **New filings, twice a day (6:30 a.m. and 10:30 p.m. New York time, and a minute after startup).** Read EDGAR's `master.YYYYMMDD.idx` for each day since the last run. A 10-K or 10-Q reloads the company's facts and ratios; an 8-K or Form 4 refreshes its filings list only. EDGAR's companyfacts can lag a filing by days, so a company whose facts do not yet include the new report is retried on later runs for a week. New listings that are not yet in `companies` are picked up by the next bulk load. Sector medians are recomputed at the end from phase 5.
 3. **Quote loop, market hours.** Cycle through the warm tier at the configured rate. At 50 calls per minute, about 520 names take roughly 10 minutes per pass. Pause outside 9:30 a.m. to 4:00 p.m. ET and on weekends.
 4. **Daily bars, nightly.** One Alpaca multi-symbol request per batch of warm tickers for the latest daily bar.
-5. **Promotion, nightly.** Set `tier = warm` for any cold company with `view_count` of 3 or more in the last 30 days. Demote anything unopened for 90 days that is not in the S&P 500, the watchlist, or the portfolio.
+5. **Promotion, nightly (2:00 a.m.).** Set `tier = warm` for any cold company opened 3 or more times in the last 30 days, counted from `company_views`. Demote anything unopened for 90 days that is not in the S&P 500, the watchlist, or the portfolio.
+
+Each job's last run, result, and position are kept in `job_runs` and shown by `/api/status`.
 
 **On-request path for a cold stock**
 
