@@ -240,11 +240,12 @@ def ensure_bars(session: Session, ticker: str) -> None:
 
 
 def warm_tickers(session: Session) -> list[str]:
-    """Primary tickers of warm companies plus anything on the watchlist."""
+    """Primary tickers of warm companies, the watchlist, and every holding (funds included)."""
     from app.db.models import WatchItem
+    from app.pipeline.holdings import held_tickers
 
     rows = session.scalars(
         select(Company.ticker).where(Company.tier == "warm").order_by(Company.ticker)
     ).all()
     watch = session.scalars(select(WatchItem.ticker)).all()
-    return sorted(set(rows) | set(watch))
+    return sorted(set(rows) | set(watch) | set(held_tickers(session)))

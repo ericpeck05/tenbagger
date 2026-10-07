@@ -5,7 +5,8 @@
   tier (about 500 names at 45 a minute, roughly 11 minutes a pass). Outside market hours it
   only refreshes quotes from before the latest close, so one pass after the close, then idle.
 - Daily bars: shortly after startup, then at 4:30 p.m. New York time on weekdays, top up
-  every warm ticker's bars. The first run backfills history since 2016.
+  every warm ticker's bars and the SPY benchmark, then rebuild the portfolio's daily
+  series. The first run backfills history since 2016.
 
 Set RUN_JOBS=false in the environment to turn them off (the tests do).
 """
@@ -21,7 +22,7 @@ from app import market
 from app.config import get_settings
 from app.db.models import Quote
 from app.db.session import session_scope
-from app.pipeline import pricing
+from app.pipeline import holdings, pricing
 
 log = logging.getLogger(__name__)
 
@@ -60,9 +61,12 @@ def bars_job() -> int:
         return 0
     total = 0
     with session_scope() as session:
-        tickers = [t for t in pricing.warm_tickers(session) if pricing.bars_needed(session, t)]
+        wanted = [*pricing.warm_tickers(session), holdings.BENCHMARK]
+        tickers = [t for t in wanted if pricing.bars_needed(session, t)]
         for i in range(0, len(tickers), BARS_BATCH):
             total += pricing.update_bars(session, tickers[i : i + BARS_BATCH])
+        # New closes mean a new day in the portfolio's daily series.
+        holdings.rebuild_daily(session, fetch=False)
     if tickers:
         log.info("daily bars: %d tickers topped up, %d bars stored", len(tickers), total)
     return total
